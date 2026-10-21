@@ -1,0 +1,5 @@
+year_month,total_hari,jumlah_hari_kerja,jumlah_libur_nasional_weekday,is_lebaran,is_covid,tanggal
+2026-09,30,22,0,0,0,2026-09-01
+2026-10,31,22,0,0,0,2026-10-01
+2026-11,30,21,0,0,0,2026-11-01
+2026-12,31,22,1,0,0,2026-12-01
