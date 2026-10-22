@@ -1,73 +1,284 @@
-# Prediksi Penumpang KRL Jabodetabek
+# Prediksi Permintaan Penumpang KRL Jabodetabek Berbasis Time Series dengan Interval Prediksi
 
-Proyek analisis deret waktu (*time series forecasting*) dan pemodelan prediktif untuk memproyeksikan jumlah penumpang KRL Commuter Line Jabodetabek dengan pendekatan kuantifikasi ketidakpastian (*uncertainty quantification* / conformal prediction) dan evaluasi risiko.
+Proyek Sistem Cerdas, Program Studi Sains Data Terapan, Politeknik Elektronika Negeri Surabaya (PENS).
+
+Proyek ini meramalkan jumlah penumpang KRL Jabodetabek per bulan, lengkap dengan
+**batas bawah dan batas atas prediksi** (interval 80% dan 95%), lalu mengubah batas atas
+tersebut menjadi **status risiko kapasitas** (aman, waspada, kritis).
 
 ---
 
-## 📁 Struktur Direktori
+## Daftar Isi
 
-```text
+1. [Latar Belakang](#1-latar-belakang)
+2. [Permasalahan](#2-permasalahan)
+3. [Tujuan](#3-tujuan)
+4. [Data](#4-data)
+5. [Workflow Kerja](#5-workflow-kerja)
+6. [Metode](#6-metode)
+7. [Evaluasi](#7-evaluasi)
+8. [Struktur Repositori](#8-struktur-repositori)
+9. [Cara Menjalankan](#9-cara-menjalankan)
+10. [Status Pengerjaan](#10-status-pengerjaan)
+11. [Keterbatasan](#11-keterbatasan)
+12. [Referensi](#12-referensi)
+
+---
+
+## 1. Latar Belakang
+
+KRL Commuter Line adalah tulang punggung transportasi harian di Jabodetabek. Mayoritas
+penggunanya adalah pekerja dan pelajar, sehingga kepadatan KRL berkaitan langsung dengan
+produktivitas, waktu tempuh, dan keselamatan penumpang.
+
+Beberapa fakta yang melatarbelakangi proyek ini:
+
+- Menurut laporan KAI, jumlah perjalanan KRL naik dari sekitar 168 juta (2021) menjadi
+  sekitar 349 juta (2025), dan rata-rata sekitar 1,05 juta per hari kerja pada semester I 2026.
+- Okupansi jam sibuk dilaporkan mencapai 128–161% di beberapa lintas.
+- Infrastruktur (persinyalan, gardu listrik, armada, dan headway) berkembang jauh lebih
+  lambat daripada pertumbuhan permintaan.
+- Data BPS Januari–Mei 2026 berkisar 27,8–30,6 juta penumpang per bulan, mirip level
+  Juli 2018 (sekitar 29,1 juta). Jika definisinya sebanding, jumlah penumpang tercatat
+  cenderung mendatar. Dugaannya adalah **keterbatasan kapasitas**, bukan turunnya
+  permintaan. Ini hipotesis yang diuji dalam proyek ini, bukan kesimpulan.
+
+## 2. Permasalahan
+
+1. Keputusan penambahan layanan sulit dipertanggungjawabkan karena tidak ada ukuran
+   **ketidakpastian** permintaan. Prediksi satu angka tidak cukup untuk perencanaan kapasitas.
+2. Pola permintaan dipengaruhi tren, musiman, Lebaran, jumlah hari kerja, dan COVID,
+   sehingga perlu model yang mempelajari faktor-faktor ini dari data.
+3. Penumpang yang tercatat belum tentu sama dengan permintaan sebenarnya, karena data
+   bisa tertahan oleh kapasitas.
+
+## 3. Tujuan
+
+1. Meramalkan jumlah penumpang KRL Jabodetabek bulanan beberapa bulan ke depan
+   secara akurat.
+2. Menghasilkan **interval prediksi 80% dan 95%** dengan cakupan (coverage) yang terukur.
+3. Menerjemahkan batas atas prediksi menjadi **peringatan risiko kelebihan kapasitas**
+   sebagai dukungan keputusan bagi operator dan pemerintah.
+4. Menguji secara empiris apakah penumpang pasca-COVID benar-benar mendatar.
+
+**Klaim "cerdas" hanya sah jika model utama terbukti mengalahkan baseline** dalam akurasi
+titik dan cakupan interval, berdasarkan backtest.
+
+## 4. Data
+
+| Data | Sumber | Isi |
+|---|---|---|
+| Jumlah penumpang kereta api (variabel target) | BPS (sumber asli: PT KAI dan KAI Commuter) | 11 file CSV, satu per tahun (2016–2026), hanya kategori **Jabodetabek** dipakai |
+| Kalender eksogen (variabel prediktor) | Dibangkitkan dengan library `holidays` | Hari kerja, libur nasional, penanda Lebaran, penanda COVID |
+
+Ringkasan:
+
+- Granularitas: **bulanan**, tingkat sistem agregat (tanpa data per stasiun atau lintas).
+- Satuan target: **ribu orang**.
+- Rentang: Januari 2016 sampai bulan terakhir yang dirilis BPS.
+- Hanya satu sumber (BPS) yang dipakai sebagai seri utama, karena angka BPS dan KAI berbeda.
+- Penanda COVID: Maret 2020 sampai Desember 2022.
+
+Dokumentasi lengkap (kamus data, catatan kualitas, log perubahan) ada di
+[`data/README.md`](data/README.md).
+
+## 5. Workflow Kerja
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ 1. Gabung data   →  2. EDA   →  3. Fitur   →  4. Backtest & baseline │
+│                                                                     │
+│ 5. Model utama (SARIMAX, LightGBM)  →  6. Interval conformal        │
+│                                                                     │
+│ 7. Evaluasi & pilih model  →  8. Lapisan keputusan  →  9. Dashboard │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+| Tahap | Notebook / modul | Yang dikerjakan | Output |
+|---|---|---|---|
+| 1. Persiapan data | `01_data_prep.ipynb`, `src/data_prep.py` | Gabung 11 file BPS (wide menjadi long), ambil baris Jabodetabek, validasi total 12 bulan terhadap kolom `Tahunan`, bersihkan kalender, gabung target dan kalender | `data/processed/data_final.csv`, `kalender_future.csv`, `validasi_tahunan.csv` |
+| 2. EDA | `02_eda.ipynb` | Tren, dampak COVID, musiman (STL, indeks musiman), efek Lebaran dan hari kerja, uji stasioneritas (ADF, KPSS), ACF/PACF, uji hipotesis "mendatar" | Grafik di `reports/figures/`, temuan tertulis |
+| 3. Rekayasa fitur | `03_features.ipynb`, `src/features.py` | Lag target, rolling mean (dengan `shift(1)` agar tidak bocor), fitur bulan, Lebaran lag/lead, penanda COVID | Tabel fitur siap model |
+| 4. Backtest dan baseline | `src/backtest.py`, `04_baseline_sarimax.ipynb` | Rancang rolling-origin backtest, bangun baseline (seasonal naive dan ETS) | Kerangka evaluasi, skor baseline |
+| 5. Model utama | `04_baseline_sarimax.ipynb`, `05_lightgbm_conformal.ipynb`, `src/models.py` | SARIMAX dengan regressor, LightGBM dengan fitur lag dan quantile regression | Prediksi titik per fold dan horizon |
+| 6. Interval prediksi | `05_lightgbm_conformal.ipynb` | Conformal prediction dari residual backtest (interval 80% dan 95%) | Batas bawah dan atas |
+| 7. Evaluasi | `src/metrics.py`, `06_evaluasi_risiko.ipynb` | Bandingkan semua model dengan MASE, PICP, MPIW, Winkler | Tabel perbandingan, model terpilih |
+| 8. Lapisan keputusan | `src/risk.py`, `06_evaluasi_risiko.ipynb` | Bandingkan batas atas dengan ambang kapasitas, tentukan status, analisis sensitivitas | Tabel prediksi dan status risiko |
+| 9. Aplikasi | `app/` | Dashboard interaktif (Streamlit) | Dashboard |
+
+## 6. Metode
+
+**Baseline**
+- Seasonal naive: prediksi bulan ini sama dengan bulan yang sama tahun lalu.
+- ETS (Holt-Winters) dengan musiman 12.
+
+**Model utama**
+- **SARIMAX** dengan regressor kalender (hari kerja, Lebaran, COVID).
+- **LightGBM** dengan fitur lag dan rolling, serta quantile regression.
+
+**Penanganan COVID** (2020–2022 adalah patahan struktural)
+- Penanda COVID sebagai regressor.
+- Pembandingan dengan data latih yang dipotong mulai 2023.
+- Hasil evaluasi dilaporkan dua kali: seluruh periode dan hanya pasca-COVID.
+
+**Interval prediksi: conformal prediction**
+- Residual out-of-sample dari backtest dikumpulkan per horizon.
+- Kuantil residual (80% dan 95%) menjadi lebar interval.
+- Untuk LightGBM kuantil dipakai varian CQR (Conformalized Quantile Regression).
+- Interval ini dibandingkan dengan interval bawaan SARIMAX dan interval kuantil mentah.
+
+**Lapisan keputusan**
+
+Kapasitas bulanan resmi belum tersedia, sehingga `ambang_kapasitas` dijadikan **parameter**
+di `src/config.py`.
+
+| Status | Kondisi (batas atas interval 95%) |
+|---|---|
+| Aman | di bawah 90% ambang |
+| Waspada | antara 90% dan 100% ambang |
+| Kritis | sama dengan atau di atas ambang |
+
+Dilengkapi analisis sensitivitas (ambang digeser ±5% dan ±10%).
+
+## 7. Evaluasi
+
+**Rolling-origin backtest** (expanding window, tanpa pengacakan data): model dilatih pada
+data sampai titik waktu tertentu, meramal 1–6 bulan ke depan, lalu jendela latih digeser maju.
+
+| Metrik | Mengukur | Arah |
+|---|---|---|
+| MASE | Akurasi titik relatif terhadap seasonal naive | Makin kecil makin baik (di bawah 1 berarti lebih baik dari naive) |
+| PICP | Persentase nilai aktual yang masuk interval | Mendekati level nominal (80% atau 95%) |
+| MPIW | Rata-rata lebar interval | Makin kecil makin baik, asal PICP terpenuhi |
+| Winkler score | Lebar interval ditambah penalti jika aktual di luar interval | Makin kecil makin baik |
+
+RMSE dan MAE dipakai sebagai pendamping. MAPE tidak dijadikan metrik utama karena tidak
+stabil pada nilai kecil (April–Mei 2020).
+
+## 8. Struktur Repositori
+
+```
 prediksi-penumpang-krl-jabodetabek/
 ├── data/
-│   ├── raw/                  # Data mentah asli dari BPS (jangan diedit)
-│   ├── processed/            # Data hasil pembersihan dan rekayasa fitur
-│   └── README.md             # Dokumentasi sumber, tanggal akses, dan satuan data
+│   ├── raw/                          # Data mentah BPS dan kalender (jangan diedit)
+│   ├── processed/                    # Hasil pembersihan dan penggabungan
+│   └── README.md                     # Dokumentasi data
 ├── notebooks/
-│   ├── 01_eda.ipynb          # Exploratory Data Analysis
-│   ├── 02_preprocessing.ipynb# Data cleaning, outlier handling & feature engineering
-│   ├── 03_baseline_sarimax.ipynb  # Pemodelan baseline statistik (SARIMAX)
-│   ├── 04_lightgbm_conformal.ipynb# Pemodelan ML (LightGBM) & Conformal Prediction
-│   └── 05_evaluasi_risiko.ipynb   # Analisis skenario, evaluasi risiko & metrik bisnis
+│   ├── 01_data_prep.ipynb            # Gabung dan validasi data
+│   ├── 02_eda.ipynb                  # Exploratory Data Analysis
+│   ├── 03_features.ipynb             # Rekayasa fitur
+│   ├── 04_baseline_sarimax.ipynb     # Baseline dan SARIMAX
+│   ├── 05_lightgbm_conformal.ipynb   # LightGBM dan conformal prediction
+│   └── 06_evaluasi_risiko.ipynb      # Evaluasi, risiko kapasitas, skenario
 ├── src/
-│   ├── data_prep.py          # Modul load & pembersihan data
-│   ├── features.py           # Ekstraksi fitur waktu, lag, dan rolling window
-│   ├── models.py             # Definisi pipeline model (SARIMAX, LightGBM, MAPIE)
-│   ├── backtest.py           # Validasi deret waktu (Time-Series Split / Expanding Window)
-│   ├── metrics.py            # Perhitungan metrik evaluasi (RMSE, MAE, MAPE, Coverage)
-│   └── risk.py               # Analisis risiko, interval prediksi, dan skenario kapasitas
-├── reports/
-│   └── figures/              # Grafik, plot peramalan, dan visualisasi laporan
-├── app/                      # Aplikasi interaktif dashboard (Streamlit)
-├── requirements.txt          # Dependensi pustaka Python
-├── .gitignore                # File filter git
-└── README.md                 # Dokumentasi utama proyek
+│   ├── config.py                     # Parameter (ambang kapasitas, level interval, horizon)
+│   ├── data_prep.py                  # Load dan pembersihan data
+│   ├── features.py                   # Fitur waktu, lag, rolling window
+│   ├── models.py                     # Baseline, SARIMAX, LightGBM, conformal
+│   ├── backtest.py                   # Rolling-origin backtest
+│   ├── metrics.py                    # MASE, PICP, MPIW, Winkler, RMSE, MAE
+│   └── risk.py                       # Status risiko dan skenario kapasitas
+├── outputs/                          # Hasil backtest (CSV) dan prediksi
+├── reports/figures/                  # Grafik dan visualisasi laporan
+├── app/                              # Dashboard Streamlit
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
----
+## 9. Cara Menjalankan
 
-## 🛠️ Tech Stack & Dependensi
+**1. Siapkan lingkungan**
 
-- **Bahasa:** Python 3.10+
-- **Manipulasi Data:** `pandas`, `numpy`, `scipy`
-- **Visualisasi:** `matplotlib`, `seaborn`, `plotly`
-- **Pemodelan & Statistik:** `statsmodels`, `pmdarima`, `scikit-learn`, `lightgbm`
-- **Uncertainty Quantification:** `mapie` (Conformal Prediction)
-- **Deployment / UI (Opsional):** `streamlit`
-
----
-
-## 🚀 Panduan Memulai
-
-### 1. Inisialisasi Virtual Environment
 ```bash
+git clone <url-repo>
+cd prediksi-penumpang-krl-jabodetabek
+
 python -m venv venv
-# Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# Linux / macOS:
-source venv/bin/activate
-```
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux / macOS
 
-### 2. Instalasi Dependensi
-```bash
 pip install -r requirements.txt
 ```
 
+Library utama: `pandas`, `numpy`, `matplotlib`, `scipy`, `statsmodels`, `lightgbm`,
+`scikit-learn`, `holidays`, `streamlit`, `jupyter`.
+
+**2. Letakkan data mentah**
+
+Salin 11 file BPS (`Jumlah_Penumpang_Kereta_Api__<tahun>.csv`) dan
+`kalender_eksogen_krl_2013_2026.csv` ke `data/raw/`.
+
+**3. Jalankan notebook berurutan**
+
+```
+01_data_prep → 02_eda → 03_features → 04_baseline_sarimax → 05_lightgbm_conformal → 06_evaluasi_risiko
+```
+
+Notebook `01` harus dijalankan lebih dulu karena menghasilkan `data/processed/data_final.csv`
+yang dipakai semua notebook berikutnya.
+
+**4. Jalankan dashboard** (setelah tahap selesai)
+
+```bash
+streamlit run app/app.py
+```
+
+## 10. Status Pengerjaan
+
+| Tahap | Status |
+|---|---|
+| Struktur folder dan dokumentasi data | Selesai |
+| 1. Persiapan data (`01_data_prep`) | Selesai |
+| 2. EDA (`02_eda`) | Selesai |
+| 3. Rekayasa fitur | Belum |
+| 4. Backtest dan baseline | Belum |
+| 5. SARIMAX dan LightGBM | Belum |
+| 6. Conformal prediction | Belum |
+| 7. Evaluasi | Belum |
+| 8. Lapisan keputusan | Belum |
+| 9. Dashboard | Belum |
+
+### Hasil sementara (diisi setelah notebook dijalankan)
+
+- Rentang data aktual: `[isi]` sampai `[isi]` (`[isi]` observasi)
+- Validasi total tahunan terhadap kolom `Tahunan`: `[isi: cocok / ada selisih]`
+- Kekuatan musiman (STL): `[isi]`
+- Efek Lebaran rata-rata terhadap bulan tetangga: `[isi]`%
+- Hipotesis "mendatar" pasca-2023: slope `[isi]` juta/bulan, kesimpulan `[isi]`
+
+## 11. Keterbatasan
+
+- **Sampel kecil** (sekitar 100–130 titik bulanan), sehingga dipilih model sederhana
+  (SARIMAX dan gradient boosting kecil), bukan deep learning.
+- **Patahan COVID** (2020–2022) memengaruhi estimasi parameter dan evaluasi.
+- **Data tertahan kapasitas:** penumpang tercatat belum tentu sama dengan permintaan sebenarnya.
+- **Ambang kapasitas bersifat asumsi,** karena kapasitas bulanan resmi belum ditemukan.
+  Hasil status risiko harus dibaca bersama analisis sensitivitas.
+- **Jaminan conformal bersifat aproksimasi,** karena data time series tidak saling bebas.
+  Cakupan diukur secara empiris di data uji yang terpisah dari data kalibrasi.
+- **Perbedaan sumber:** angka BPS dan KAI untuk tahun yang sama tidak identik.
+- **Regressor masa depan:** `is_lebaran` dan hari kerja dapat diketahui sebelumnya, tetapi
+  asumsi tidak ada gangguan besar baru (seperti COVID) tidak dapat dijamin.
+
+## 12. Referensi
+
+1. BPS. *Jumlah Penumpang Kereta Api.* https://www.bps.go.id/id/statistics-table/2/NzIjMg==/jumlah-penumpang-kereta-api.html
+2. BPS. *Penumpang Angkutan Kereta Api Nasional Bulanan.* https://www.bps.go.id/en/statistics-table/2/MjM1MyMy/penumpang-angkutan-kereta-api-nasional-bulanan-.html
+3. BPS Provinsi DKI Jakarta. *Jumlah Penumpang Kereta Api Menurut Bulan.* https://jakarta.bps.go.id/id/statistics-table/2/MTMyOSMy/jumlah-penumpang-kereta-api-menurut-bulan-orang-.html
+4. DJKA Kemenhub. *Data Statistik (Penumpang PSO KRL Jabodetabek).* https://djka.dephub.go.id/statistik
+5. Portal Satu Data Indonesia. *Jumlah Penumpang Kereta Api.* https://data.go.id/dataset/dataset/jumlah-penumpang-kereta-api
+6. Repository ITS. *Peramalan Jumlah Penumpang KRL Commuter Line (DNN).* https://repository.its.ac.id/64545/
+7. Kompas. *178 Juta Perjalanan KRL Jabodetabek pada Semester I 2026.* https://money.kompas.com/read/2026/08/04/164300926/178-juta-perjalanan-krl-jabodetabek-pada-semester-i-2026-kai--penambahan
+8. RRI. *Commuter Line Melayani 178 Juta Perjalanan Selama Semester I 2026.* https://rri.co.id/ekonomi/bisnis/2619503/commuter-line-melayani-178-juta-perjalanan-selama-semester-i-2026
+9. Kontan. *KRL Jabodetabek Overkapasitas hingga 161%.* https://industri.kontan.co.id/news/krl-jabodetabek-overkapasitas-hingga-161-kai-siapkan-penambahan-infrastruktur
+10. Tirto. *KRL Jabodetabek Makin Sesak, Segerbong Bisa Capai 480 Penumpang.* https://tirto.id/krl-jabodetabek-makin-sesak-segerbong-bisa-capai-480-penumpang-hDde
+11. Detik. *1 Juta Orang Desak-desakan di KRL Tiap Hari Kerja.* https://finance.detik.com/berita-ekonomi-bisnis/d-8601318/1-juta-orang-desak-desakan-di-krl-tiap-hari-kerja
+12. CNN Indonesia. *Kemenhub Buat Kajian Tarif KRL Naik Rp1.000–Rp2.000 (2024).* https://www.cnnindonesia.com/ekonomi/20240912130431-92-1143769/kemenhub-buat-kajian-tarif-krl-naik-rp1000-rp2000
+13. Eprints UNDIP. *Latar belakang studi pengguna KRL.* https://eprints2.undip.ac.id/42634/2/FARRA%20FRIZKA%20_14020122140135%20_BAB%20I.pdf
+
 ---
 
-## 📊 Alur Proyek (*Project Pipeline*)
+## Penulis
 
-1. **Eksplorasi Data (EDA):** Identifikasi tren musiman (*seasonality*), pola tahunan, anomali periode pandemi, serta stasioneritas data.
-2. **Preprocessing & Feature Engineering:** Penanganan *missing values*, pembuatan fitur *lag*, *rolling mean/std*, serta indikator kalender (libur nasional/hari kerja).
-3. **Pemodelan Baseline:** Model statistik klasik (SARIMAX) sebagai acuan performa dasar.
-4. **Machine Learning & Conformal Prediction:** Pelatihan model LightGBM dengan estimasi interval kepercayaan menggunakan *Conformal Prediction* (MAPIE) untuk mengukur ketidakpastian proyeksi.
-5. **Evaluasi Risiko:** Pengujian skenario lonjakan (*surge demand*) dan risiko *underestimation/overestimation* bagi operasional KRL.
+`[isi nama]` · `[isi NRP]` · Sains Data Terapan, PENS
