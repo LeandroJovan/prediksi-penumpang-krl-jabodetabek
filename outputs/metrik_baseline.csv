@@ -1,0 +1,13 @@
+subset,model,n,MAE,RMSE,MAPE_%,MASE
+semua,ETS,465,3655.98,7494.94,32.56,1.87
+semua,ETS_tanpa_musim,465,3545.14,7211.54,31.48,1.82
+semua,naive,465,2701.06,4378.3,23.0,1.38
+semua,seasonal_naive,465,6129.96,8365.23,48.04,3.14
+non_covid,ETS,267,1651.44,2090.06,6.1,0.85
+non_covid,ETS_tanpa_musim,267,1557.12,1913.76,5.69,0.8
+non_covid,naive,267,1568.85,1935.35,5.72,0.8
+non_covid,seasonal_naive,267,3268.45,3922.91,12.67,1.68
+bersih,ETS,180,1674.83,2092.97,5.8,0.86
+bersih,ETS_tanpa_musim,180,1527.89,1877.22,5.25,0.78
+bersih,naive,180,1548.96,1915.65,5.31,0.79
+bersih,seasonal_naive,180,2117.51,2362.92,7.37,1.09

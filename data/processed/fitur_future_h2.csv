@@ -1,0 +1,3 @@
+tanggal,y_lag0,y_lag1,y_lag2,y_tahun_lalu,roll_mean_3,roll_mean_12,bulan,bulan_sin,bulan_cos,jumlah_hari_kerja,selisih_hari_kerja_vs_tahun_lalu,is_lebaran,lebaran_lag1,lebaran_lead1,is_covid,tanggal_target,y_target,tercemar_covid
+2026-07-01,32467.0,30468.0,28967.0,28741.0,30634.0,30162.25,9,-1.0,-1.8369701987210297e-16,22,1.0,0,0,0,0,2026-09-01,,0
+2026-08-01,30135.0,32467.0,30468.0,31777.0,31023.333333333332,30261.25,10,-0.8660254037844386,0.5000000000000001,22,-1.0,0,0,0,0,2026-10-01,,0
