@@ -104,3 +104,86 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
   .lp-marks{gap:14px}
   .lp h1{font-size:32px}
 }
+
+/* =========================================================
+   Animasi Kereta & Parallax Latar (.lp-scene)
+   ========================================================= */
+
+/* 1. Matahari melayang pelan */
+@keyframes krl-sun-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-18px); }
+}
+
+/* 2. Parallax Gedung Jauh (geser ke kiri mulus tanpa putus) */
+@keyframes krl-pan-city-far {
+  from { transform: translateX(0); }
+  to { transform: translateX(-640px); }
+}
+
+/* 3. Parallax Gedung Dekat (kecepatan sedang ke kiri tanpa putus) */
+@keyframes krl-pan-city-near {
+  from { transform: translateX(0); }
+  to { transform: translateX(-640px); }
+}
+
+/* 4. Bantalan Rel melaju cepat ke kiri */
+@keyframes krl-pan-track {
+  from { transform: translateX(0); }
+  to { transform: translateX(-640px); }
+}
+
+/* 5. Badan Kereta bergetar halus naik-turun 1.5px */
+@keyframes krl-train-vibe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+/* 6. Roda Kereta berputar penuh */
+@keyframes krl-wheel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Penerapan class animasi */
+.krl-sun {
+  animation: krl-sun-drift 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.krl-city-far {
+  animation: krl-pan-city-far 22s linear infinite;
+  will-change: transform;
+}
+
+.krl-city-near {
+  animation: krl-pan-city-near 11s linear infinite;
+  will-change: transform;
+}
+
+.krl-ties {
+  animation: krl-pan-track 0.75s linear infinite;
+  will-change: transform;
+}
+
+.krl-body {
+  animation: krl-train-vibe 0.32s ease-in-out infinite;
+  will-change: transform;
+}
+
+.krl-wheel {
+  animation: krl-wheel-spin 0.45s linear infinite;
+  will-change: transform;
+}
+
+/* Aksesibilitas: nonaktifkan animasi bila pengguna meminta reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .krl-sun,
+  .krl-city-far,
+  .krl-city-near,
+  .krl-ties,
+  .krl-body,
+  .krl-wheel {
+    animation: none !important;
+  }
+}
