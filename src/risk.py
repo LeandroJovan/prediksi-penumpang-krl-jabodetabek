@@ -89,3 +89,4 @@ def analisis_sensitivitas(df_prediksi, ambang_dasar=AMBANG_KAPASITAS_DEFAULT,
         hasil_skenario.append(baris)
 
     return pd.DataFrame(hasil_skenario)
+

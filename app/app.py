@@ -285,3 +285,4 @@ if data_loaded:
 
 st.sidebar.write("---")
 st.sidebar.caption("© 2026 Tim Proyek Sistem Cerdas — PENS")
+
