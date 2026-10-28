@@ -180,8 +180,11 @@ prediksi-penumpang-krl-jabodetabek/
 │   └── risk.py                       # Status risiko dan skenario kapasitas
 ├── outputs/                          # Hasil backtest (CSV) dan prediksi
 ├── reports/figures/                  # Grafik dan visualisasi laporan
-├── app/                              # Dashboard Streamlit
-├── docs/                             # Panduan integrasi Back-End & Front-End
+├── app/                              # Dashboard Front-End (Streamlit)
+├── backend/                          # REST API Server Back-End (Flask)
+├── docs/                             # Panduan teknis terpisah (Back-End & Front-End)
+│   ├── PETUNJUK_BACKEND.md           # Panduan API, skema data & serving Back-End
+│   └── PETUNJUK_FRONTEND.md          # Panduan UI/UX, kontrol interaktif & visualisasi Front-End
 ├── requirements.txt
 ├── .gitignore
 └── README.md
