@@ -118,22 +118,22 @@ const pages = {
         <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a></div>
         <ul class="lp-marks"><li>${I(P.check, 18)}Data BPS</li><li>${I(P.check, 18)}Interval 80% &amp; 95%</li><li>${I(P.check, 18)}Evaluasi transparan</li></ul></div>
       <div class="lp-scene">
-        <svg class="krl-bg-svg" viewBox="0 0 640 430" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Latar Stasiun dan Rel KRL">
+        <svg class="krl-bg-svg" viewBox="0 0 640 430" preserveAspectRatio="xMaxYMid slice" role="img" aria-label="Ilustrasi Lokomotif KAI dan Jalur Rel">
           <defs>
             <linearGradient id="beam-gradient" x1="100%" y1="50%" x2="0%" y2="50%">
               <stop offset="0%" stop-color="#fef08a" stop-opacity="0.85"/>
-              <stop offset="40%" stop-color="#fef9c3" stop-opacity="0.4"/>
+              <stop offset="35%" stop-color="#fef9c3" stop-opacity="0.35"/>
               <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
             </linearGradient>
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="6" result="blur"/>
+              <feGaussianBlur stdDeviation="5" result="blur"/>
               <feComposite in="SourceGraphic" in2="blur" operator="over"/>
             </filter>
           </defs>
 
           <!-- Langit & Matahari -->
           <rect width="640" height="430" fill="#cfe3fb"/>
-          <circle class="krl-sun" cx="520" cy="80" r="46" fill="#fff" opacity=".75"/>
+          <circle class="krl-sun" cx="520" cy="75" r="44" fill="#fff" opacity=".8"/>
 
           <!-- Parallax Lapisan Gedung Jauh (Distant Skyline) -->
           <g class="krl-city-far" fill="#bdd6f5">
@@ -145,31 +145,37 @@ const pages = {
             ${[0, 640].map((dx) => [[20, 130, 70, 170], [100, 90, 60, 210], [170, 150, 80, 150], [330, 110, 70, 190], [410, 155, 60, 145], [480, 100, 80, 200], [570, 140, 70, 160]].map(([x, y, w, h]) => `<rect x="${x + dx}" y="${y}" width="${w}" height="${h}"/>`).join('')).join('')}
           </g>
 
-          <!-- Tanah / Balas Rel -->
-          <polygon points="0,290 640,260 640,430 0,430" fill="#cbd5e1" opacity=".7"/>
-          <polygon points="0,320 640,290 640,430 0,430" fill="#94a3b8" opacity=".5"/>
+          <!-- Tanah & Balas Rel -->
+          <polygon points="0,320 640,290 640,430 0,430" fill="#cbd5e1" opacity=".7"/>
+          <polygon points="0,355 640,325 640,430 0,430" fill="#94a3b8" opacity=".5"/>
 
-          <!-- Bantalan Rel Bergerak Cepat -->
+          <!-- Bantalan Rel Bergerak Mulus (Ties) -->
           <g class="krl-ties">
-            ${Array.from({length: 40}, (_, i) => `<line x1="${i * 32}" y1="330" x2="${i * 32 + 20}" y2="430" stroke="#475569" stroke-width="6" opacity=".7"/>`).join('')}
+            ${Array.from({length: 32}, (_, i) => {
+              const xt = (i - 4) * 32;
+              const yt = Math.round(352 - xt * 0.044);
+              return `<line x1="${xt}" y1="${yt}" x2="${xt + 16}" y2="${yt + 78}" stroke="#475569" stroke-width="6" opacity=".75"/>`;
+            }).join('')}
           </g>
 
-          <!-- Rel Baja -->
-          <path d="M0 365 L640 310" stroke="#334155" stroke-width="6"/>
-          <path d="M0 415 L640 345" stroke="#1e293b" stroke-width="7"/>
+          <!-- Rel Belakang (Rail 2) -->
+          <line x1="-40" y1="364" x2="680" y2="332" stroke="#334155" stroke-width="5"/>
 
-          <!-- Sorot Lampu Depan Lokomotif (Headlight Light Cone) -->
-          <g class="krl-headlights">
-            <polygon points="240,240 0,130 0,420" fill="url(#beam-gradient)"/>
-            <circle cx="240" cy="242" r="15" fill="#fef08a" filter="url(#glow)"/>
-            <circle cx="178" cy="238" r="13" fill="#fef08a" filter="url(#glow)"/>
+          <!-- Rel Depan (Rail 1) -->
+          <line x1="-40" y1="426" x2="680" y2="394" stroke="#1e293b" stroke-width="6"/>
+
+          <!-- Lokomotif KAI (Bagian belakang memanjang penuh ke pojok kanan tanpa ada ruang kosong) -->
+          <g class="krl-loco-group">
+            <!-- Sorot Lampu Depan Lokomotif -->
+            <g class="krl-headlights">
+              <polygon points="335,276 0,150 0,430 450,280" fill="url(#beam-gradient)"/>
+              <circle cx="335" cy="276" r="11" fill="#fef08a" filter="url(#glow)"/>
+              <circle cx="450" cy="280" r="11" fill="#fef08a" filter="url(#glow)"/>
+            </g>
+            <!-- Gambar Lokomotif KAI (x=165, width=560 menempel rapat dan memanjang tembus pojok kanan) -->
+            <image href="img/lokomotif-kai.png" xlink:href="img/lokomotif-kai.png" x="165" y="18" width="560" height="404" preserveAspectRatio="none"/>
           </g>
         </svg>
-
-        <!-- Lokomotif KAI (Transparan dengan Getaran Mesin) -->
-        <div class="krl-loco-wrap">
-          <img src="img/lokomotif-kai.png" alt="Lokomotif KAI" class="krl-loco-img"/>
-        </div>
       </div>
     </div></section>
 

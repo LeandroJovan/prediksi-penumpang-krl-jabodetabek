@@ -127,22 +127,10 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
   to { transform: translateX(0); }
 }
 
-/* 4. Bantalan Rel melaju mundur ke kanan seiring kereta melaju maju */
+/* 4. Bantalan Rel melaju mundur ke kanan seiring kereta melaju maju (loop mulus 32px) */
 @keyframes krl-pan-track {
-  from { transform: translateX(-640px); }
+  from { transform: translateX(-32px); }
   to { transform: translateX(0); }
-}
-
-/* 5. Badan Kereta bergetar halus naik-turun 1.5px */
-@keyframes krl-train-vibe {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
-}
-
-/* 6. Roda Kereta berputar penuh */
-@keyframes krl-wheel-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* Penerapan class animasi */
@@ -162,52 +150,28 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
 }
 
 .krl-ties {
-  animation: krl-pan-track 0.75s linear infinite;
+  animation: krl-pan-track 0.28s linear infinite;
   will-change: transform;
 }
 
-.krl-body {
-  animation: krl-train-vibe 0.32s ease-in-out infinite;
-  will-change: transform;
-}
-
-.krl-wheel {
-  animation: krl-wheel-spin 0.45s linear infinite;
-  will-change: transform;
-}
-
-/* 7. Lokomotif KAI (3/4 Perspektif) Menempel Rapi di Pojokan & Sorot Lampu */
+/* 5. Lokomotif KAI di dalam SVG (getaran mesin & sorot lampu) */
 .krl-bg-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
-  z-index: 1;
 }
 
-.krl-loco-wrap {
-  position: absolute;
-  right: -32px;
-  bottom: -24px;
-  width: 86%;
-  max-width: 530px;
-  z-index: 2;
-  pointer-events: none;
+.krl-loco-group {
   animation: kai-loco-vibe 0.35s ease-in-out infinite alternate;
   will-change: transform;
-}
-
-.krl-loco-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 14px 28px rgba(11, 31, 63, 0.32));
+  transform-origin: 385px 235px;
 }
 
 @keyframes kai-loco-vibe {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-2.5px); }
+  100% { transform: translateY(-2px); }
 }
 
 .krl-headlights {
@@ -215,8 +179,8 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
 }
 
 @keyframes kai-headlight-pulse {
-  0% { opacity: 0.5; }
-  100% { opacity: 0.9; }
+  0% { opacity: 0.6; }
+  100% { opacity: 0.95; }
 }
 
 /* Aksesibilitas: nonaktifkan animasi bila pengguna meminta reduced motion */
@@ -225,9 +189,7 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
   .krl-city-far,
   .krl-city-near,
   .krl-ties,
-  .krl-body,
-  .krl-wheel,
-  .krl-loco-wrap,
+  .krl-loco-group,
   .krl-headlights {
     animation: none !important;
   }
