@@ -177,14 +177,18 @@ prediksi-penumpang-krl-jabodetabek/
 │   ├── models.py                     # Baseline, SARIMAX, LightGBM, conformal
 │   ├── backtest.py                   # Rolling-origin backtest
 │   ├── metrics.py                    # MASE, PICP, MPIW, Winkler, RMSE, MAE
-│   └── risk.py                       # Status risiko dan skenario kapasitas
+│   ├── risk.py                       # Status risiko dan skenario kapasitas
+│   └── export_app_data.py            # Penghubung pipeline model ke frontend/data/data.json
 ├── outputs/                          # Hasil backtest (CSV) dan prediksi
 ├── reports/figures/                  # Grafik dan visualisasi laporan
 ├── app/                              # Dashboard Front-End (Streamlit)
-├── backend/                          # REST API Server Back-End (Flask)
-├── docs/                             # Panduan teknis terpisah (Back-End & Front-End)
-│   ├── PETUNJUK_BACKEND.md           # Panduan API, skema data & serving Back-End
-│   └── PETUNJUK_FRONTEND.md          # Panduan UI/UX, kontrol interaktif & visualisasi Front-End
+├── frontend/                         # Web Dashboard KRL Insight (HTML, CSS, JS)
+├── backend/                          # REST API Server Back-End (FastAPI & Flask)
+├── docs/                             # Panduan teknis & dokumentasi arsitektur
+│   ├── PETUNJUK_BACKEND.md           # Panduan integrasi model & serving Back-End
+│   ├── PETUNJUK_FRONTEND.md          # Panduan UI/UX & visualisasi risiko Front-End
+│   ├── architecture.md               # Dokumentasi arsitektur sistem
+│   └── artifact-contract.md          # Spesifikasi kontrak artefak
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -206,7 +210,7 @@ pip install -r requirements.txt
 ```
 
 Library utama: `pandas`, `numpy`, `matplotlib`, `scipy`, `statsmodels`, `lightgbm`,
-`scikit-learn`, `holidays`, `streamlit`, `jupyter`.
+`scikit-learn`, `holidays`, `jupyter`.
 
 **2. Letakkan data mentah**
 
@@ -222,11 +226,17 @@ Salin 11 file BPS (`Jumlah_Penumpang_Kereta_Api__<tahun>.csv`) dan
 Notebook `01` harus dijalankan lebih dulu karena menghasilkan `data/processed/data_final.csv`
 yang dipakai semua notebook berikutnya.
 
-**4. Jalankan dashboard** (setelah tahap selesai)
+**4. Jalankan Dashboard Web (Frontend)**
 
 ```bash
-streamlit run app/app.py
+# 1. Ekspor data aktual dan hasil peramalan model ke format dashboard
+python src/export_app_data.py
+
+# 2. Jalankan web server lokal frontend
+cd frontend
+python -m http.server 8000
 ```
+Buka browser pada: `http://localhost:8000` (atau gunakan Live Server di VS Code).
 
 ## 10. Status Pengerjaan
 

@@ -143,3 +143,4 @@ Jika operator atau BPS menerbitkan data rilis bulan baru:
 2. Jalankan notebook `03_features.ipynb` atau fungsi `buat_fitur_lightgbm()` di `src/features.py`.
 3. Panggil fungsi inference `prediksi_lightgbm()` dan `ramal_sarimax_interval()` di `src/models.py`.
 4. Perbarui file `outputs/prediksi_future_6bln.csv`.
+

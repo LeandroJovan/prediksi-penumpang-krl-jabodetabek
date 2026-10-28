@@ -101,3 +101,4 @@ Front-End dapat beroperasi dengan dua cara:
    - Front-End mengirim request ke server backend Flask (`backend/api.py`):
      - `GET http://localhost:5000/api/forecast`
      - `POST http://localhost:5000/api/simulate-risk` (payload: `{ "ambang_kapasitas": 34000, "batas_waspada": 0.90 }`).
+
