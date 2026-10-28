@@ -16,11 +16,11 @@ LEVEL_INTERVAL = [0.80, 0.95]    # level interval prediksi
 
 # ---------- Target ----------
 KOLOM_TARGET = "penumpang_ribu"                  # target utama (ribu orang)
-KOLOM_TARGET_ALT = "penumpang_per_hari"    # target alternatif (dinormalisasi hari kerja)
+KOLOM_TARGET_ALT = "penumpang_per_hari"          # target alternatif (dinormalisasi hari kerja)
 
-# ---------- Kapasitas (diisi pada fase lapisan keputusan) ----------
-AMBANG_KAPASITAS = None          # ribu penumpang per bulan, belum ditentukan
-BATAS_WASPADA = 0.90             # waspada jika batas atas >= 90% ambang
+# ---------- Kapasitas (Lapisan Keputusan) ----------
+AMBANG_KAPASITAS = 34000.0       # ribu penumpang per bulan (~34 juta orang/bulan)
+BATAS_WASPADA = 0.90             # waspada jika batas atas >= 90% ambang (>= 30.6 juta)
 
 # ---------- Backtest ----------
 ORIGIN_AWAL_BACKTEST = "2019-12-01"   # origin pertama (48 bulan data latih: 2016-01 s/d 2019-12)

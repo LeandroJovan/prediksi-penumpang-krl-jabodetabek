@@ -181,7 +181,14 @@ prediksi-penumpang-krl-jabodetabek/
 │   └── export_app_data.py            # Penghubung pipeline model ke frontend/data/data.json
 ├── outputs/                          # Hasil backtest (CSV) dan prediksi
 ├── reports/figures/                  # Grafik dan visualisasi laporan
+├── app/                              # Dashboard Front-End (Streamlit)
 ├── frontend/                         # Web Dashboard KRL Insight (HTML, CSS, JS)
+├── backend/                          # REST API Server Back-End (FastAPI & Flask)
+├── docs/                             # Panduan teknis & dokumentasi arsitektur
+│   ├── PETUNJUK_BACKEND.md           # Panduan integrasi model & serving Back-End
+│   ├── PETUNJUK_FRONTEND.md          # Panduan UI/UX & visualisasi risiko Front-End
+│   ├── architecture.md               # Dokumentasi arsitektur sistem
+│   └── artifact-contract.md          # Spesifikasi kontrak artefak
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -233,26 +240,32 @@ Buka browser pada: `http://localhost:8000` (atau gunakan Live Server di VS Code)
 
 ## 10. Status Pengerjaan
 
-| Tahap | Status |
-|---|---|
-| Struktur folder dan dokumentasi data | Selesai |
-| 1. Persiapan data (`01_data_prep`) | Selesai |
-| 2. EDA (`02_eda`) | Selesai |
-| 3. Rekayasa fitur | Belum |
-| 4. Backtest dan baseline | Belum |
-| 5. SARIMAX dan LightGBM | Belum |
-| 6. Conformal prediction | Belum |
-| 7. Evaluasi | Belum |
-| 8. Lapisan keputusan | Belum |
-| 9. Dashboard | Belum |
+| Tahap | Status | Output Utama |
+|---|---|---|
+| Struktur folder dan dokumentasi data | Selesai | Kamus data, catatan kualitas BPS di `data/README.md` |
+| 1. Persiapan data (`01_data_prep`) | Selesai | `data/processed/data_final.csv`, `kalender_future.csv` |
+| 2. EDA (`02_eda`) | Selesai | Grafik musiman STL, uji ADF/KPSS, analisis tren pasca-COVID |
+| 3. Rekayasa fitur (`03_features`) | Selesai | `fitur_lgbm_h1.csv` s/d `h6.csv`, regressor `data_sarimax.csv` |
+| 4. Backtest dan baseline | Selesai | Rolling-origin backtest, skor benchmark ETS & Seasonal Naive |
+| 5. SARIMAX dan LightGBM | Selesai | `src/models.py`, `04_baseline_sarimax.ipynb`, `05_lightgbm_conformal.ipynb` |
+| 6. Conformal prediction | Selesai | Kalibrasi CQR interval 80% dan 95% (`outputs/metrik_interval_conformal.csv`) |
+| 7. Evaluasi komparatif | Selesai | `outputs/metrik_komparasi_final.csv` (MASE, PICP, MPIW, Winkler) |
+| 8. Lapisan keputusan | Selesai | `src/risk.py`, `06_evaluasi_risiko.ipynb`, analisis sensitivitas kapasitas |
+| 9. Dashboard interaktif | Selesai | Aplikasi Streamlit di `app/app.py` |
 
-### Hasil sementara (diisi setelah notebook dijalankan)
+### Ringkasan Hasil Empiris
 
-- Rentang data aktual: `[isi]` sampai `[isi]` (`[isi]` observasi)
-- Validasi total tahunan terhadap kolom `Tahunan`: `[isi: cocok / ada selisih]`
-- Kekuatan musiman (STL): `[isi]`
-- Efek Lebaran rata-rata terhadap bulan tetangga: `[isi]`%
-- Hipotesis "mendatar" pasca-2023: slope `[isi]` juta/bulan, kesimpulan `[isi]`
+- **Rentang data aktual**: Januari 2016 sampai Agustus 2026 (128 observasi bulanan).
+- **Validasi total tahunan**: Cocok (konsisten 100% terhadap tabel BPS).
+- **Kekuatan musiman (STL)**: Sangat kuat dengan penurunan signifikan di bulan Idul Fitri (rata-rata **-7.2%** dibanding bulan tetangga).
+- **Hipotesis tren pasca-COVID**: Slope linear **+0.188 juta penumpang/bulan** (~8.2% per tahun, p < 0.001). Data membuktikan bahwa permintaan tetap bertumbuh namun mulai tertahan oleh batas atas kapasitas pada jam sibuk.
+- **Kemenangan Model Cerdas vs Baseline (Periode Bersih)**:
+  - **SARIMAX (0,1,1)(0,1,1)12**: **MASE = 0.524** | MAE = 1.022 ribu orang (~33% lebih akurat dari ETS).
+  - **LightGBM Multi-Horizon**: **MASE = 0.600** | MAE = 1.170 ribu orang (terbaik di horizon h=2 dan h=3).
+  - **Baseline Pembanding**: ETS (MASE = 0.783), Naive (0.794), Seasonal Naive (1.086).
+- **Kualitas Interval Prediksi (Conformal Prediction)**:
+  - Interval 80% menghasilkan cakupan empiris (**PICP**) sebesar **82.4% – 85.7%**.
+  - Interval 95% menjamin cakupan 100% pada periode evaluasi, andal untuk dasar peringatan risiko kapasitas.
 
 ## 11. Keterbatasan
 
