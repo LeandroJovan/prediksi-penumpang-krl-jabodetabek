@@ -117,52 +117,61 @@ const pages = {
         <p>Perkirakan jumlah penumpang 1–6 bulan ke depan, lihat seberapa pasti perkiraannya, dan terima peringatan dini sebelum kapasitas terlampaui.</p>
         <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a></div>
         <ul class="lp-marks"><li>${I(P.check, 18)}Data BPS</li><li>${I(P.check, 18)}Interval 80% &amp; 95%</li><li>${I(P.check, 18)}Evaluasi transparan</li></ul></div>
-      <div class="lp-scene"><svg viewBox="0 0 640 430" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Ilustrasi KRL di stasiun">
-        <rect width="640" height="430" fill="#cfe3fb"/>
-        <circle class="krl-sun" cx="520" cy="90" r="46" fill="#fff" opacity=".75"/>
+      <div class="lp-scene">
+        <svg class="krl-bg-svg" viewBox="0 0 640 430" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Latar Stasiun dan Rel KRL">
+          <defs>
+            <linearGradient id="beam-gradient" x1="100%" y1="50%" x2="0%" y2="50%">
+              <stop offset="0%" stop-color="#fef08a" stop-opacity="0.85"/>
+              <stop offset="40%" stop-color="#fef9c3" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
 
-        <!-- Parallax Lapisan Gedung Jauh (Distant Skyline) -->
-        <g class="krl-city-far" fill="#bdd6f5">
-          ${[0, 640].map((dx) => [[10, 170, 50, 150], [70, 130, 60, 190], [140, 190, 70, 130], [220, 140, 50, 180], [280, 160, 60, 160], [350, 120, 70, 200], [430, 180, 50, 140], [490, 135, 70, 185], [570, 165, 60, 155]].map(([x, y, w, h]) => `<rect x="${x + dx}" y="${y}" width="${w}" height="${h}"/>`).join('')).join('')}
-        </g>
+          <!-- Langit & Matahari -->
+          <rect width="640" height="430" fill="#cfe3fb"/>
+          <circle class="krl-sun" cx="520" cy="80" r="46" fill="#fff" opacity=".75"/>
 
-        <!-- Parallax Lapisan Gedung Dekat (Midground Skyline) -->
-        <g class="krl-city-near" fill="#9bbfe8">
-          ${[0, 640].map((dx) => [[20, 150, 70, 170], [100, 110, 60, 210], [170, 170, 80, 150], [330, 130, 70, 190], [410, 175, 60, 145], [480, 120, 80, 200], [570, 160, 70, 160]].map(([x, y, w, h]) => `<rect x="${x + dx}" y="${y}" width="${w}" height="${h}"/>`).join('')).join('')}
-        </g>
-
-        <!-- Peron dan Tanah -->
-        <rect y="318" width="640" height="112" fill="#e8eef7"/>
-        <rect y="318" width="640" height="10" fill="#94a3b8"/>
-
-        <!-- Bantalan Rel Bergerak Cepat -->
-        <g class="krl-ties">
-          ${Array.from({length: 40}, (_, i) => `<rect x="${i * 32}" y="366" width="8" height="34" rx="2" fill="#b0c4de" opacity=".8"/>`).join('')}
-        </g>
-        <path d="M0 372H640M0 396H640" stroke="#cbd5e1" stroke-width="6"/>
-        <path d="M0 40H640" stroke="#64748b" stroke-width="2"/>
-
-        <!-- Badan Kereta Bergetar Halus -->
-        <g class="krl-body">
-          <rect x="-10" y="226" width="680" height="94" rx="30" fill="#fff"/>
-          <rect x="-10" y="268" width="680" height="16" fill="#12305c"/>
-          <rect x="-10" y="284" width="680" height="6" fill="#2563eb"/>
-          ${[10, 120, 230, 340, 450].map((x) => `<rect x="${x}" y="244" width="84" height="38" rx="9" fill="#12305c" opacity=".88"/>`).join('')}
-          <rect x="560" y="240" width="60" height="50" rx="12" fill="#12305c"/>
-        </g>
-
-        <!-- Roda Berputar Terus -->
-        ${[70, 280, 490].map((x) => `
-          <g class="krl-wheel" style="transform-origin: ${x}px 326px;">
-            <circle cx="${x}" cy="326" r="14" fill="#0b1f3f"/>
-            <circle cx="${x}" cy="326" r="9" fill="#1e293b"/>
-            <line x1="${x - 11}" y1="326" x2="${x + 11}" y2="326" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="${x}" y1="315" x2="${x}" y2="337" stroke="#94a3b8" stroke-width="2"/>
-            <circle cx="${x}" cy="326" r="3" fill="#cbd5e1"/>
+          <!-- Parallax Lapisan Gedung Jauh (Distant Skyline) -->
+          <g class="krl-city-far" fill="#bdd6f5">
+            ${[0, 640].map((dx) => [[10, 150, 50, 150], [70, 110, 60, 190], [140, 170, 70, 130], [220, 120, 50, 180], [280, 140, 60, 160], [350, 100, 70, 200], [430, 160, 50, 140], [490, 115, 70, 185], [570, 145, 60, 155]].map(([x, y, w, h]) => `<rect x="${x + dx}" y="${y}" width="${w}" height="${h}"/>`).join('')).join('')}
           </g>
-        `).join('')}
-      </svg>
-      <div class="lp-float"><b>5 model</b><span>dibandingkan lewat backtesting</span></div></div>
+
+          <!-- Parallax Lapisan Gedung Dekat (Midground Skyline) -->
+          <g class="krl-city-near" fill="#9bbfe8">
+            ${[0, 640].map((dx) => [[20, 130, 70, 170], [100, 90, 60, 210], [170, 150, 80, 150], [330, 110, 70, 190], [410, 155, 60, 145], [480, 100, 80, 200], [570, 140, 70, 160]].map(([x, y, w, h]) => `<rect x="${x + dx}" y="${y}" width="${w}" height="${h}"/>`).join('')).join('')}
+          </g>
+
+          <!-- Tanah / Balas Rel -->
+          <polygon points="0,290 640,260 640,430 0,430" fill="#cbd5e1" opacity=".7"/>
+          <polygon points="0,320 640,290 640,430 0,430" fill="#94a3b8" opacity=".5"/>
+
+          <!-- Bantalan Rel Bergerak Cepat -->
+          <g class="krl-ties">
+            ${Array.from({length: 40}, (_, i) => `<line x1="${i * 32}" y1="330" x2="${i * 32 + 20}" y2="430" stroke="#475569" stroke-width="6" opacity=".7"/>`).join('')}
+          </g>
+
+          <!-- Rel Baja -->
+          <path d="M0 365 L640 310" stroke="#334155" stroke-width="6"/>
+          <path d="M0 415 L640 345" stroke="#1e293b" stroke-width="7"/>
+
+          <!-- Sorot Lampu Depan Lokomotif (Headlight Light Cone) -->
+          <g class="krl-headlights">
+            <polygon points="215,220 0,140 0,390" fill="url(#beam-gradient)"/>
+            <circle cx="215" cy="220" r="14" fill="#fef08a" filter="url(#glow)"/>
+            <circle cx="155" cy="216" r="12" fill="#fef08a" filter="url(#glow)"/>
+          </g>
+        </svg>
+
+        <!-- Lokomotif KAI (Transparan dengan Getaran Mesin) -->
+        <div class="krl-loco-wrap">
+          <img src="img/lokomotif-kai.png" alt="Lokomotif KAI" class="krl-loco-img"/>
+        </div>
+
+        <div class="lp-float"><b>5 model</b><span>dibandingkan lewat backtesting</span></div></div>
     </div></section>
 
     <footer class="lp-foot wrap">KRL Insight &middot; Sistem pendukung keputusan, bukan pengganti keputusan operasional resmi &middot; Sumber data: BPS</footer></div>`;
