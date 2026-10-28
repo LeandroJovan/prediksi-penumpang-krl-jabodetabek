@@ -115,22 +115,22 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
   50% { transform: translateX(-18px); }
 }
 
-/* 2. Parallax Gedung Jauh (geser ke kiri mulus tanpa putus) */
+/* 2. Parallax Gedung Jauh (geser mundur ke kanan seiring kereta melaju maju) */
 @keyframes krl-pan-city-far {
-  from { transform: translateX(0); }
-  to { transform: translateX(-640px); }
+  from { transform: translateX(-640px); }
+  to { transform: translateX(0); }
 }
 
-/* 3. Parallax Gedung Dekat (kecepatan sedang ke kiri tanpa putus) */
+/* 3. Parallax Gedung Dekat (kecepatan sedang mundur ke kanan) */
 @keyframes krl-pan-city-near {
-  from { transform: translateX(0); }
-  to { transform: translateX(-640px); }
+  from { transform: translateX(-640px); }
+  to { transform: translateX(0); }
 }
 
-/* 4. Bantalan Rel melaju cepat ke kiri */
+/* 4. Bantalan Rel melaju mundur ke kanan seiring kereta melaju maju */
 @keyframes krl-pan-track {
-  from { transform: translateX(0); }
-  to { transform: translateX(-640px); }
+  from { transform: translateX(-640px); }
+  to { transform: translateX(0); }
 }
 
 /* 5. Badan Kereta bergetar halus naik-turun 1.5px */
@@ -176,7 +176,7 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
   will-change: transform;
 }
 
-/* 7. Lokomotif KAI (3/4 Perspektif) & Sorot Lampu Depan */
+/* 7. Lokomotif KAI (3/4 Perspektif) Menempel Rapi di Pojokan & Sorot Lampu */
 .krl-bg-svg {
   position: absolute;
   inset: 0;
@@ -188,10 +188,10 @@ body.intro #sidebar,body.intro #topbar{display:none}body.intro{background:#fff}b
 
 .krl-loco-wrap {
   position: absolute;
-  right: -5px;
-  bottom: -20px;
-  width: 78%;
-  max-width: 480px;
+  right: -32px;
+  bottom: -24px;
+  width: 86%;
+  max-width: 530px;
   z-index: 2;
   pointer-events: none;
   animation: kai-loco-vibe 0.35s ease-in-out infinite alternate;

@@ -160,9 +160,9 @@ const pages = {
 
           <!-- Sorot Lampu Depan Lokomotif (Headlight Light Cone) -->
           <g class="krl-headlights">
-            <polygon points="215,220 0,140 0,390" fill="url(#beam-gradient)"/>
-            <circle cx="215" cy="220" r="14" fill="#fef08a" filter="url(#glow)"/>
-            <circle cx="155" cy="216" r="12" fill="#fef08a" filter="url(#glow)"/>
+            <polygon points="240,240 0,130 0,420" fill="url(#beam-gradient)"/>
+            <circle cx="240" cy="242" r="15" fill="#fef08a" filter="url(#glow)"/>
+            <circle cx="178" cy="238" r="13" fill="#fef08a" filter="url(#glow)"/>
           </g>
         </svg>
 
@@ -170,8 +170,7 @@ const pages = {
         <div class="krl-loco-wrap">
           <img src="img/lokomotif-kai.png" alt="Lokomotif KAI" class="krl-loco-img"/>
         </div>
-
-        <div class="lp-float"><b>5 model</b><span>dibandingkan lewat backtesting</span></div></div>
+      </div>
     </div></section>
 
     <footer class="lp-foot wrap">KRL Insight &middot; Sistem pendukung keputusan, bukan pengganti keputusan operasional resmi &middot; Sumber data: BPS</footer></div>`;
