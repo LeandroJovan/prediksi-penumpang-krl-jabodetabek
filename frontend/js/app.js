@@ -13,8 +13,7 @@ const PAGES = [
   ['prediksi', 'Prediksi Penumpang', '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'],
   ['historis', 'Analisis Historis', '<path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-6"/>'],
   ['risiko', 'Risiko Kapasitas', '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>'],
-  ['evaluasi', 'Evaluasi Model', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
-  ['tentang', 'Tentang Sistem', '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>']
+  ['evaluasi', 'Evaluasi Model', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>']
 ];
 let D, ambang, charts = {};
 function DEMO_FLAG() { return typeof DEMO !== 'undefined' ? DEMO : new URLSearchParams(location.search).has('demo'); }
@@ -105,25 +104,18 @@ const rr = (r) => risk(r.u95, ambang);
 
 const pages = {
   beranda() {
-    const ready = D.historis.length && D.forecast.length, demo = DEMO_FLAG();
-    const st = demo ? 'Mode demo' : ready ? 'Data terhubung' : 'Menunggu data';
     const I = (d, n = 22) => `<svg viewBox="0 0 24 24" width="${n}" height="${n}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const logo = '<svg viewBox="0 0 32 32" width="32" height="32"><rect x="6" y="3" width="20" height="21" rx="5" fill="#0b1f3f"/><rect x="9" y="7" width="14" height="8" rx="2" fill="#fff"/><circle cx="11.5" cy="19.5" r="1.7" fill="#fff"/><circle cx="20.5" cy="19.5" r="1.7" fill="#fff"/><path d="M9 29l3-5m11 5l-3-5" stroke="#0b1f3f" stroke-width="2" stroke-linecap="round"/></svg>';
-    const P = { chart: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>', band: '<path d="M3 8c6-4 12 4 18 0M3 16c6-4 12 4 18 0"/>', warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5"/>', bars: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', dl: '<path d="M12 4v11m-4-4l4 4 4-4M5 20h14"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>', check: '<path d="M5 12l4 4 10-10"/>', db: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/>', target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>' };
-    const small = [['#historis', P.cal, 'Analisis Historis', 'Tren, musiman, COVID-19, dan Lebaran.'], ['#risiko', P.warn, 'Risiko Kapasitas', 'Status per bulan dan sensitivitas ambang.'], ['#evaluasi', P.bars, 'Evaluasi Model', 'Lima model, metrik backtesting.'], ['#prediksi', P.dl, 'Ekspor Hasil', 'Unduh tabel prediksi sebagai CSV.'], ['#tentang', P.info, 'Tentang Sistem', 'Metode, keterbatasan, dan alur kerja.']];
-    const why = [[P.band, 'Interval prediksi', 'Rentang 80% dan 95% menyertai setiap prediksi titik.'], [P.target, 'Conformal prediction', 'Interval dibentuk dari galat backtesting yang nyata.'], [P.bars, 'Backtesting', 'Lima model diuji, hasilnya ditampilkan apa adanya.'], [P.warn, 'Status risiko', 'Aman, Waspada, Kritis dengan aturan yang tetap.'], [P.lock, 'Tanpa data leakage', 'Pelatihan tidak melihat data masa depan.'], [P.db, 'Data transparan', 'Tanpa data tersedia, tertulis “Menunggu data”.']];
-    const flow = [['Data BPS', 'Agregat bulanan Jabodetabek'], ['Data Preparation', 'Pembersihan dan penyelarasan bulan'], ['Feature Engineering', 'Kalender, hari kerja, Lebaran'], ['Forecasting', 'Lima model dibandingkan'], ['Prediction Interval', 'Conformal prediction 80% dan 95%'], ['Risk Assessment', 'Batas atas 95% vs ambang'], ['Dashboard', 'Tampilan untuk pengambil keputusan']];
-    const thumb = (ban) => `<svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#eaf1fb"/>${ban ? '<path d="M170 70L290 25V95Z" fill="#12305c" opacity=".14"/><path d="M170 70L290 42V78Z" fill="#12305c" opacity=".25"/>' : ''}<path d="M10 95C40 60 70 90 100 62S150 55 170 70" fill="none" stroke="#12305c" stroke-width="3"/><path d="${ban ? 'M170 70C210 62 250 56 290 52' : 'M170 70L290 40'}" stroke="#2563eb" stroke-width="3" stroke-dasharray="6 4" fill="none"/></svg>`;
+    const P = { check: '<path d="M5 12l4 4 10-10"/>' };
     $('#view').innerHTML = `<div class="lp">
     <header class="lp-top wrap"><a class="lp-brand" href="#beranda">${logo}KRL Insight</a>
-      <nav class="lp-links"><a href="#fitur">Fitur</a><a href="#kenapa">Keunggulan</a><a href="#cara">Cara kerja</a><a href="#tentang">Tentang</a></nav>
       <a class="btn acc" href="#dashboard">Buka dashboard</a></header>
 
     <section class="lp-hero"><div class="wrap lp-hg">
       <div class="lp-copy"><span class="lp-eyebrow">Prediksi &amp; peringatan dini kapasitas</span>
         <h1>Prediksi Penumpang <em>KRL Jabodetabek</em> yang Lebih Siap</h1>
         <p>Perkirakan jumlah penumpang 1–6 bulan ke depan, lihat seberapa pasti perkiraannya, dan terima peringatan dini sebelum kapasitas terlampaui.</p>
-        <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a><a class="btn sec lg" href="#cara">Lihat cara kerja</a></div>
+        <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a></div>
         <ul class="lp-marks"><li>${I(P.check, 18)}Data BPS</li><li>${I(P.check, 18)}Interval 80% &amp; 95%</li><li>${I(P.check, 18)}Evaluasi transparan</li></ul></div>
       <div class="lp-scene"><svg viewBox="0 0 640 430" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Ilustrasi KRL di stasiun">
         <rect width="640" height="430" fill="#cfe3fb"/><circle cx="520" cy="90" r="46" fill="#fff" opacity=".75"/>
@@ -137,18 +129,6 @@ const pages = {
         <div class="lp-float"><b>5 model</b><span>dibandingkan lewat backtesting</span></div></div>
     </div></section>
 
-    <section id="fitur" class="lp-sec wrap"><span class="lp-eyebrow">Fitur</span><h2>Cara membaca prediksi sesuai kebutuhan Anda</h2><p class="lp-sub">Mulai dari ringkasan cepat sampai tabel prediksi per bulan. Status data saat ini: ${st}.</p>
-      <div class="lp-two">${[['#dashboard', 'Dashboard', 'Penumpang terakhir, prediksi bulan depan, batas atas 95%, dan status risiko dalam satu layar.', 0], ['#prediksi', 'Prediksi Penumpang', 'Pilih horizon 1 sampai 6 bulan, lihat interval 80% dan 95%, serta tabel hasilnya.', 1]].map(([h, t, x, b]) => `<a class="lp-big" href="${h}"><div class="img">${thumb(b)}</div><div class="bd"><h3>${t}</h3><p>${x}</p><span>Buka halaman &rarr;</span></div></a>`).join('')}</div>
-      <div class="lp-five">${small.map(([h, d, t, x]) => `<a href="${h}"><span class="ic">${I(d)}</span><h3>${t}</h3><p>${x}</p></a>`).join('')}</div></section>
-
-    <section class="lp-stats"><div class="wrap">${[[P.chart, '1–6 bulan', 'horizon prediksi'], [P.band, '80% &amp; 95%', 'interval prediksi'], [P.bars, '5 model', 'dibandingkan'], [P.db, '7 tahap', 'dari data ke dashboard']].map(([d, n, t]) => `<div>${I(d, 30)}<b>${n}</b><span>${t}</span></div>`).join('')}</div></section>
-
-    <section id="kenapa" class="lp-sec wrap lp-why"><div><span class="lp-eyebrow">Mengapa KRL Insight</span><h2>Lebih dari Sekadar Angka Prediksi</h2>
-      <p class="lp-sub">Satu angka bisa menyesatkan. Kami selalu menampilkan ketidakpastian dan mengubahnya menjadi status risiko yang mudah dipahami.</p><a class="btn acc lg" href="#tentang">Pelajari sistem</a></div>
-      <div class="lp-six">${why.map(([d, t, x]) => `<div><span class="ic">${I(d)}</span><h3>${t}</h3><p>${x}</p></div>`).join('')}</div></section>
-
-    <section id="cara" class="lp-flow"><div class="wrap lp-fg"><div><span class="lp-eyebrow lt">Cara kerja</span><h2>Dari Data Mentah ke Peringatan Dini</h2><p>Tujuh tahap berurutan. Hasil evaluasi dan angka prediksi hanya muncul bila pipeline sudah mengisinya, tanpa angka karangan.</p><a class="btn light lg" href="#dashboard">Masuk ke dashboard</a></div>
-      <ol>${flow.map(([t, x], i) => `<li><b>${i + 1}</b><div><h3>${t}</h3><span>${x}</span></div></li>`).join('')}</ol></div></section>
     <footer class="lp-foot wrap">KRL Insight &middot; Sistem pendukung keputusan, bukan pengganti keputusan operasional resmi &middot; Sumber data: BPS</footer></div>`;
   },
   dashboard() {
@@ -252,25 +232,20 @@ const pages = {
     <div class="grid g2e"><div class="card"><h2>MASE: seluruh periode vs pasca-COVID</h2><div class="chart sm">${ok ? '<canvas id="e1"></canvas>' : empty()}</div></div>
     <div class="card"><h2>Model terpilih</h2><p>${D.meta.model_terpilih ? `<b>${D.meta.model_terpilih}</b> dipilih berdasarkan hasil backtesting.` : 'Belum ada model terpilih. Pemilihan menunggu hasil backtesting aktual.'}</p></div></div>`;
     if (ok) chart('e1', { type: 'bar', data: { labels: E.map((r) => r.model), datasets: [{ label: 'Seluruh periode', data: E.map((r) => r.mase), backgroundColor: NAVY }, { label: 'Pasca-COVID', data: P.map((r) => r.mase), backgroundColor: '#60a5fa' }] }, options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'MASE (tanpa satuan)' } } } } });
-  },
-
-  tentang() {
-    const T = [['Data BPS', 'Data Prep', 'Feature Engineering', 'Forecasting', 'Prediction Interval', 'Risk Assessment', 'Dashboard']];
-    $('#view').innerHTML = head('Tentang Sistem', 'Penjelasan singkat sistem KRL Insight') + `<div class="card prose" style="margin-bottom:16px">
-    <h2>Latar belakang dan tujuan</h2><p>KRL Jabodetabek melayani jutaan perjalanan setiap bulan. Proyek ini memprediksi jumlah penumpang 1–6 bulan ke depan, menunjukkan ketidakpastiannya, dan memberi peringatan dini jika berisiko melampaui ambang kapasitas.</p>
-    <h2>Data dan metode</h2><p>Data berasal dari BPS berupa agregat bulanan Jabodetabek. Model yang dibandingkan: Naive, Seasonal Naive, ETS (Holt-Winters), SARIMAX, dan LightGBM, dievaluasi dengan backtesting tanpa data leakage.</p>
-    <h2>Conformal prediction</h2><p>Interval 80% dan 95% dibuat dari galat prediksi historis hasil backtesting, sehingga rentang ketidakpastian mengikuti performa model yang sebenarnya, tanpa asumsi distribusi tertentu.</p>
-    <h2>Status risiko</h2><p>Aman jika batas atas 95% di bawah 90% ambang; Waspada pada 90% hingga di bawah 100%; Kritis jika sama dengan atau di atas ambang. Ambang adalah parameter sistem, bukan kapasitas resmi.</p>
-    <h2>Keterbatasan</h2><p>Data bulanan tidak menggambarkan okupansi per kereta atau per stasiun. Prediksi dapat meleset saat terjadi kejadian luar biasa. Aplikasi ini adalah sistem pendukung keputusan, bukan pengganti keputusan operasional resmi.</p></div>
-    <div class="card"><h2>Alur kerja</h2><div class="flow">${T[0].map((t) => `<span>${t}</span>`).join('<i>&rarr;</i>')}</div></div>`;
   }
 };
 
 /* ---------- Router & sidebar ---------- */
 function route() {
-  const p = location.hash.slice(1); if (['fitur', 'cara', 'prinsip'].includes(p)) { document.getElementById(p)?.scrollIntoView({ behavior: 'smooth' }); return; } const k = pages[p] ? p : 'beranda'; document.body.classList.toggle('intro', k === 'beranda');
+  const p = location.hash.slice(1);
+  const k = pages[p] ? p : 'beranda';
+  document.body.classList.toggle('intro', k === 'beranda');
   document.querySelectorAll('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.p === k));
-  if (!D) return; Object.values(charts).forEach((c) => c.destroy()); charts = {}; pages[k](); scrollTo(0, 0);
+  if (!D) return;
+  Object.values(charts).forEach((c) => c.destroy());
+  charts = {};
+  pages[k]();
+  scrollTo(0, 0);
 }
 $('#nav').innerHTML = PAGES.map(([k, t, i]) => `<a href="#${k}" data-p="${k}" title="${t}">${ico(i)}<span class="label">${t}</span></a>`).join('');
 $('#toggle').onclick = () => { document.body.classList.toggle('wide'); $('#toggle').textContent = document.body.classList.contains('wide') ? '«' : '»'; };

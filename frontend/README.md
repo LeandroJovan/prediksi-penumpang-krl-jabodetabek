@@ -62,10 +62,9 @@ Script tersebut akan secara otomatis:
 
 ## 🧭 Halaman & Fitur Dashboard
 
-1. **Beranda (`#beranda`)**: Landing page sistem KRL Insight, rangkuman alur kerja dan keunggulan uncertainty quantification.
+1. **Beranda (`#beranda`)**: Landing page sederhana untuk langsung masuk ke Dashboard KRL Insight.
 2. **Dashboard Utama (`#dashboard`)**: Ringkasan eksekutif, status risiko kapasitas (Aman/Waspada/Kritis), grafik tren dan batas atas 95%.
 3. **Prediksi Penumpang (`#prediksi`)**: Proyeksi 1–6 bulan dengan rentang ketidakpastian 80% & 95%, serta fitur ekspor CSV.
 4. **Analisis Historis (`#historis`)**: Eksplorasi deret waktu 2016–2026, dekomposisi tahunan, pola musiman, dampak Lebaran & COVID-19.
 5. **Risiko Kapasitas (`#risiko`)**: Komparasi batas atas 95% terhadap ambang kapasitas dengan simulasi sensitivitas ($\pm 5\%$, $\pm 10\%$).
 6. **Evaluasi Model (`#evaluasi`)**: Metrik ilmiah komparatif (MASE, PICP, MPIW) seluruh periode vs pasca-COVID tanpa kebocoran data.
-7. **Tentang Sistem (`#tentang`)**: Metodologi, batasan sistem, dan disclaimer pendukung keputusan operasional.
