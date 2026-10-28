@@ -2,7 +2,7 @@
 export_app_data.py
 ------------------
 Script untuk menyambungkan hasil data preparation, backtesting,
-dan model machine learning dari tim ke dashboard frontend (app/data/data.json).
+dan model machine learning dari tim ke dashboard frontend (frontend/data/data.json).
 
 Dijalankan secara otomatis atau manual saat ada pembaruan data/model:
     python src/export_app_data.py
@@ -26,7 +26,7 @@ import metrics as mt
 PATH_DATA_FINAL = os.path.join(DIR_ROOT, "data", "processed", "data_final.csv")
 PATH_METRIK_BASELINE = os.path.join(DIR_ROOT, "outputs", "metrik_baseline.csv")
 PATH_BACKTEST_BASELINE = os.path.join(DIR_ROOT, "outputs", "backtest_baseline.csv")
-PATH_OUTPUT_JSON = os.path.join(DIR_ROOT, "app", "data", "data.json")
+PATH_OUTPUT_JSON = os.path.join(DIR_ROOT, "frontend", "data", "data.json")
 
 
 def generate_dashboard_data():
