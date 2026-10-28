@@ -1,0 +1,795 @@
+{
+  "_catatan": "Otomatis digenerate dari pipeline Machine Learning tim (src/export_app_data.py). Satuan: ribu penumpang. Format bulan: YYYY-MM.",
+  "meta": {
+    "sumber": "BPS",
+    "satuan": "ribu penumpang",
+    "periode_data": "2016-01 s.d. 2026-08",
+    "diperbarui": "Agustus 2026",
+    "model_terpilih": "ETS (Holt-Winters)",
+    "lebaran": [
+      "2016-07",
+      "2017-06",
+      "2018-06",
+      "2019-06",
+      "2020-05",
+      "2021-05",
+      "2022-05",
+      "2023-04",
+      "2024-04",
+      "2025-03",
+      "2026-03"
+    ]
+  },
+  "ambang_kapasitas": {
+    "nilai": 34000,
+    "keterangan": "Parameter sistem (kapasitas operasional representatif KRL Jabodetabek)"
+  },
+  "historis": [
+    {
+      "bulan": "2016-01",
+      "nilai": 22238.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-02",
+      "nilai": 21229.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-03",
+      "nilai": 23206.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-04",
+      "nilai": 23149.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-05",
+      "nilai": 24401.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-06",
+      "nilai": 23821.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-07",
+      "nilai": 21574.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2016-08",
+      "nilai": 23923.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2016-09",
+      "nilai": 23570.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-10",
+      "nilai": 24533.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-11",
+      "nilai": 24104.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2016-12",
+      "nilai": 24841.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2017-01",
+      "nilai": 24185.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-02",
+      "nilai": 21743.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2017-03",
+      "nilai": 25775.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-04",
+      "nilai": 25411.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2017-05",
+      "nilai": 27385.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2017-06",
+      "nilai": 24432.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2017-07",
+      "nilai": 27016.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2017-08",
+      "nilai": 27679.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-09",
+      "nilai": 26158.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2017-10",
+      "nilai": 28765.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-11",
+      "nilai": 28246.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-12",
+      "nilai": 29059.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-01",
+      "nilai": 28075.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2018-02",
+      "nilai": 25362.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-03",
+      "nilai": 29223.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-04",
+      "nilai": 28942.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-05",
+      "nilai": 28995.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2018-06",
+      "nilai": 24833.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2018-07",
+      "nilai": 29086.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2018-08",
+      "nilai": 28098.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-09",
+      "nilai": 27618.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-10",
+      "nilai": 29317.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2018-11",
+      "nilai": 28049.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-12",
+      "nilai": 29201.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2019-01",
+      "nilai": 27768.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2019-02",
+      "nilai": 25305.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2019-03",
+      "nilai": 28366.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2019-04",
+      "nilai": 28062.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2019-05",
+      "nilai": 28369.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-06",
+      "nilai": 25816.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2019-07",
+      "nilai": 29714.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2019-08",
+      "nilai": 27651.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2019-09",
+      "nilai": 28293.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-10",
+      "nilai": 29278.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2019-11",
+      "nilai": 28563.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-12",
+      "nilai": 28860.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-01",
+      "nilai": 26733.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-02",
+      "nilai": 25616.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2020-03",
+      "nilai": 18548.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-04",
+      "nilai": 5138.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-05",
+      "nilai": 5077.0,
+      "hari_kerja": 17
+    },
+    {
+      "bulan": "2020-06",
+      "nilai": 8591.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-07",
+      "nilai": 11116.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-08",
+      "nilai": 11014.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2020-09",
+      "nilai": 9678.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-10",
+      "nilai": 10128.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-11",
+      "nilai": 11622.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-12",
+      "nilai": 11330.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-01",
+      "nilai": 10149.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-02",
+      "nilai": 9796.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2021-03",
+      "nilai": 12041.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-04",
+      "nilai": 12452.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-05",
+      "nilai": 12230.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2021-06",
+      "nilai": 11978.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-07",
+      "nilai": 5102.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-08",
+      "nilai": 5947.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-09",
+      "nilai": 8693.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-10",
+      "nilai": 11347.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-11",
+      "nilai": 12792.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-12",
+      "nilai": 14213.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2022-01",
+      "nilai": 14484.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-02",
+      "nilai": 10499.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2022-03",
+      "nilai": 15735.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-04",
+      "nilai": 15890.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2022-05",
+      "nilai": 17075.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2022-06",
+      "nilai": 18326.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-07",
+      "nilai": 19467.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-08",
+      "nilai": 19388.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-09",
+      "nilai": 20587.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-10",
+      "nilai": 21807.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-11",
+      "nilai": 21589.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-12",
+      "nilai": 23118.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-01",
+      "nilai": 22717.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-02",
+      "nilai": 20811.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-03",
+      "nilai": 23856.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-04",
+      "nilai": 21402.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2023-05",
+      "nilai": 23716.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2023-06",
+      "nilai": 23292.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-07",
+      "nilai": 25211.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-08",
+      "nilai": 24979.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-09",
+      "nilai": 25082.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-10",
+      "nilai": 26793.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-11",
+      "nilai": 26171.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-12",
+      "nilai": 26861.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-01",
+      "nilai": 26848.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2024-02",
+      "nilai": 24617.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-03",
+      "nilai": 26012.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-04",
+      "nilai": 25543.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-05",
+      "nilai": 27057.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-06",
+      "nilai": 26739.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-07",
+      "nilai": 29241.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2024-08",
+      "nilai": 28209.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2024-09",
+      "nilai": 27608.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-10",
+      "nilai": 29933.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2024-11",
+      "nilai": 27522.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-12",
+      "nilai": 28825.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-01",
+      "nilai": 27522.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-02",
+      "nilai": 27204.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-03",
+      "nilai": 26974.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-04",
+      "nilai": 27552.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-05",
+      "nilai": 28561.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2025-06",
+      "nilai": 28205.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2025-07",
+      "nilai": 31401.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2025-08",
+      "nilai": 28947.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-09",
+      "nilai": 28741.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-10",
+      "nilai": 31777.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2025-11",
+      "nilai": 30373.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-12",
+      "nilai": 31640.0,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2026-01",
+      "nilai": 30226.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2026-02",
+      "nilai": 27795.0,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2026-03",
+      "nilai": 29959.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2026-04",
+      "nilai": 30587.0,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2026-05",
+      "nilai": 28967.0,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2026-06",
+      "nilai": 30468.0,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2026-07",
+      "nilai": 32467.0,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2026-08",
+      "nilai": 30135.0,
+      "hari_kerja": 19
+    }
+  ],
+  "forecast": [
+    {
+      "bulan": "2026-09",
+      "titik": 30157,
+      "l80": 27292,
+      "u80": 33021,
+      "l95": 26310,
+      "u95": 34004
+    },
+    {
+      "bulan": "2026-10",
+      "titik": 31834,
+      "l80": 28969,
+      "u80": 34698,
+      "l95": 27987,
+      "u95": 35681
+    },
+    {
+      "bulan": "2026-11",
+      "titik": 31486,
+      "l80": 28622,
+      "u80": 34351,
+      "l95": 27639,
+      "u95": 35333
+    },
+    {
+      "bulan": "2026-12",
+      "titik": 32468,
+      "l80": 29603,
+      "u80": 35333,
+      "l95": 28621,
+      "u95": 36315
+    },
+    {
+      "bulan": "2027-01",
+      "titik": 31488,
+      "l80": 28623,
+      "u80": 34353,
+      "l95": 27641,
+      "u95": 35335
+    },
+    {
+      "bulan": "2027-02",
+      "titik": 29403,
+      "l80": 26538,
+      "u80": 32267,
+      "l95": 25556,
+      "u95": 33250
+    }
+  ],
+  "evaluasi": {
+    "keseluruhan": [
+      {
+        "model": "Naive",
+        "mase": 1.38,
+        "rmse": 4378,
+        "mae": 2701,
+        "picp80": 0.66,
+        "picp95": 0.82,
+        "mpiw": 7690,
+        "winkler": 37875
+      },
+      {
+        "model": "Seasonal Naive",
+        "mase": 3.14,
+        "rmse": 8365,
+        "mae": 6130,
+        "picp80": 0.38,
+        "picp95": 0.51,
+        "mpiw": 8060,
+        "winkler": 130105
+      },
+      {
+        "model": "ETS (Holt-Winters)",
+        "mase": 1.87,
+        "rmse": 7495,
+        "mae": 3656,
+        "picp80": 0.65,
+        "picp95": 0.76,
+        "mpiw": 7694,
+        "winkler": 72790
+      },
+      {
+        "model": "SARIMAX",
+        "mase": null,
+        "rmse": null,
+        "mae": null,
+        "picp80": null,
+        "picp95": null,
+        "mpiw": null,
+        "winkler": null
+      },
+      {
+        "model": "LightGBM",
+        "mase": null,
+        "rmse": null,
+        "mae": null,
+        "picp80": null,
+        "picp95": null,
+        "mpiw": null,
+        "winkler": null
+      }
+    ],
+    "pasca_covid": [
+      {
+        "model": "Naive",
+        "mase": 0.79
+      },
+      {
+        "model": "Seasonal Naive",
+        "mase": 1.09
+      },
+      {
+        "model": "ETS (Holt-Winters)",
+        "mase": 0.86
+      },
+      {
+        "model": "SARIMAX",
+        "mase": null
+      },
+      {
+        "model": "LightGBM",
+        "mase": null
+      }
+    ]
+  }
+}

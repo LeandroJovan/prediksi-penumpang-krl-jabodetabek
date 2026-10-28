@@ -177,10 +177,11 @@ prediksi-penumpang-krl-jabodetabek/
 │   ├── models.py                     # Baseline, SARIMAX, LightGBM, conformal
 │   ├── backtest.py                   # Rolling-origin backtest
 │   ├── metrics.py                    # MASE, PICP, MPIW, Winkler, RMSE, MAE
-│   └── risk.py                       # Status risiko dan skenario kapasitas
+│   ├── risk.py                       # Status risiko dan skenario kapasitas
+│   └── export_app_data.py            # Penghubung pipeline model ke app/data/data.json
 ├── outputs/                          # Hasil backtest (CSV) dan prediksi
 ├── reports/figures/                  # Grafik dan visualisasi laporan
-├── app/                              # Dashboard Streamlit
+├── app/                              # Web Dashboard KRL Insight (HTML, CSS, JS)
 ├── requirements.txt
 ├── .gitignore
 └── README.md
