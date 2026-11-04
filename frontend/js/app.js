@@ -112,9 +112,9 @@ const pages = {
       <a class="btn acc" href="#dashboard">Buka dashboard</a></header>
 
     <section class="lp-hero"><div class="wrap lp-hg">
-      <div class="lp-copy"><span class="lp-eyebrow">Prediksi &amp; peringatan dini kapasitas</span>
-        <h1>Prediksi Penumpang <em>KRL Jabodetabek</em> yang Lebih Siap</h1>
-        <p>Perkirakan jumlah penumpang 1–6 bulan ke depan, lihat seberapa pasti perkiraannya, dan terima peringatan dini sebelum kapasitas terlampaui.</p>
+      <div class="lp-copy"><span class="lp-eyebrow">Forecasting &amp; Deteksi Risiko Kapasitas</span>
+        <h1>Prediksi Penumpang <em>KRL Jabodetabek</em></h1>
+        <p>Pantau proyeksi jumlah penumpang 1–6 bulan ke depan, rentang ketidakpastian prediksi, serta peringatan dini sebelum lonjakan melebihi kapasitas operasional.</p>
         <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a></div>
         <ul class="lp-marks"><li>${I(P.check, 18)}Data BPS</li><li>${I(P.check, 18)}Interval 80% &amp; 95%</li><li>${I(P.check, 18)}Evaluasi transparan</li></ul></div>
       <div class="lp-scene">
@@ -196,15 +196,15 @@ const pages = {
     const cal = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
     $('#view').innerHTML = head('KRL Jabodetabek|Intelligence Dashboard', 'Prediksi penumpang, ketidakpastian, dan peringatan dini kapasitas', `<span class="pill">${cal}Periode: ${D.meta.periode_data || 'menunggu data'}</span><a class="btn" href="#prediksi">+ Lihat prediksi</a>`) + `
     <div class="dg">
+      <div class="card k2"><div class="ch"><div><h2>Penumpang bulan terakhir</h2><div class="sub">${lastH ? bln(lastH.bulan) : 'Menunggu data'}</div></div>${arr('#historis')}</div><div class="num">${num(lastH?.nilai)}${dl(chg)}</div></div>
+      <div class="card k1"><div class="ch"><div><h2>Prediksi bulan berikutnya</h2><div class="sub">${f1 ? bln(f1.bulan) : 'Menunggu data'}</div></div>${arr('#prediksi')}</div><div class="num">${num(f1?.titik)}</div></div>
+      <div class="card k3"><div class="ch"><div><h2>Batas atas prediksi 95%</h2><div class="sub">Bukan nilai aktual</div></div>${arr('#risiko')}</div><div class="num">${num(f1?.u95)}</div></div>
+      <div class="card cc"><div class="ch"><div><h2>Tren historis dan prediksi</h2><div class="sub">ribu penumpang, interval 80% dan 95%</div></div><div class="hr"><div class="seg" id="win"><button data-n="12">12 bln</button><button data-n="36" class="on">36 bln</button><button data-n="9999">Semua</button></div>${arr('#prediksi')}</div></div><div class="chart">${hasF() ? '<canvas id="c1"></canvas>' : empty()}</div></div>
       <div class="card navy st"><div class="ch"><div><h2>Status risiko kapasitas</h2><div class="sub">Berdasarkan batas atas prediksi 95%</div></div>${arr('#risiko')}</div>
         ${badge(r1.s)}<div class="num">${r1.p != null ? pf.format(r1.p) + '%' : '--'} <small style="color:#9fb0cc">dari ambang</small></div>
         <div class="bar"><b style="width:${Math.min(r1.p || 0, 100)}%;background:${COL[r1.s] || '#94a3b8'}"></b></div>
         <dl><dt>Batas atas 95%</dt><dd>${fmt(f1?.u95)}</dd><dt>Ambang kapasitas</dt><dd>${fmt(ambang)}</dd></dl>
         <p class="why">${r1.s ? `Status ${r1.s.toUpperCase()}: batas atas 95% setara ${pf.format(r1.p)}% ambang (aman &lt;90%, waspada 90–&lt;100%, kritis ≥100%).` : 'Status muncul setelah prediksi dan ambang kapasitas tersedia.'}</p></div>
-      <div class="card cc"><div class="ch"><div><h2>Tren historis dan prediksi</h2><div class="sub">ribu penumpang, interval 80% dan 95%</div></div><div class="hr"><div class="seg" id="win"><button data-n="12">12 bln</button><button data-n="36" class="on">36 bln</button><button data-n="9999">Semua</button></div>${arr('#prediksi')}</div></div><div class="chart">${hasF() ? '<canvas id="c1"></canvas>' : empty()}</div></div>
-      <div class="card k1"><div class="ch"><div><h2>Prediksi bulan berikutnya</h2><div class="sub">${f1 ? bln(f1.bulan) : 'Menunggu data'}</div></div>${arr('#prediksi')}</div><div class="num">${num(f1?.titik)}</div></div>
-      <div class="card k2"><div class="ch"><div><h2>Penumpang bulan terakhir</h2><div class="sub">${lastH ? bln(lastH.bulan) : 'Menunggu data'}</div></div>${arr('#historis')}</div><div class="num">${num(lastH?.nilai)}${dl(chg)}</div></div>
-      <div class="card k3"><div class="ch"><div><h2>Batas atas prediksi 95%</h2><div class="sub">Bukan nilai aktual</div></div>${arr('#risiko')}</div><div class="num">${num(f1?.u95)}</div></div>
       <div class="card tb"><div class="ch"><div><h2>Prediksi dan risiko per bulan</h2><div class="sub">Enam bulan ke depan</div></div>${arr('#risiko')}</div><div class="tbl">${F.length ? '<table><tr><th>Bulan</th><th>Prediksi titik</th><th>Batas atas 95%</th><th>% ambang</th><th>Status</th></tr>' + F.map((r) => { const k = rr(r); return `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.titik)}</td><td>${fmt(r.u95)}</td><td>${k.p != null ? pf.format(k.p) + '%' : '--'}</td><td>${badge(k.s)}</td></tr>`; }).join('') + '</table>' : empty()}</div></div>
       <div class="card ins"><div class="ch"><div><h2>Ringkasan insight</h2><div class="sub">Dari data yang tersedia</div></div></div>${ins.length ? '<ul class="ins">' + ins.map((x) => `<li>${x}</li>`).join('') + '</ul>' : empty('Insight muncul setelah data tersedia')}</div>
     </div>`;
