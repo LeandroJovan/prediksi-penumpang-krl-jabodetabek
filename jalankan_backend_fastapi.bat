@@ -9,3 +9,4 @@ echo   - Web Dashboard    : http://localhost:8000/
 echo ========================================================
 start http://localhost:8000/docs
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+

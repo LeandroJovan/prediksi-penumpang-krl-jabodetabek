@@ -38,3 +38,4 @@ class InMemoryCache:
     async def aclose(self) -> None:
         async with self._lock:
             self._store.clear()
+

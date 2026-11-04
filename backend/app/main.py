@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     # 1. Connect ke Redis jika URL tersedia
     if settings.redis_url:
         try:
-            from redis.asyncio import Redis
+            from redis.asyncio import Redis  # type: ignore
 
             redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
             await redis_client.ping()
