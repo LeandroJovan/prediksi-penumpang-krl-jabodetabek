@@ -81,6 +81,13 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AppError, app_error_handler)
     app.include_router(api_router, prefix="/api/v1")
 
+    @app.get("/api/data", tags=["dashboard"])
+    @app.get("/api/v1/data", tags=["dashboard"])
+    async def get_dashboard_bundle_endpoint(ambang_kapasitas: float = 34000.0):
+        """Menyajikan bundle JSON lengkap untuk konsumsi langsung oleh frontend dashboard."""
+        from backend.api import build_dashboard_bundle
+        return build_dashboard_bundle(ambang_kapasitas=ambang_kapasitas)
+
     frontend = REPO_ROOT / "frontend"
     if frontend.exists():
         app.mount("/", StaticFiles(directory=str(frontend), html=True), name="frontend")

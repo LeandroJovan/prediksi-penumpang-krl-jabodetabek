@@ -112,3 +112,4 @@ def test_flask_frontend_static(client):
     res = client.get("/")
     assert res.status_code == 200
     assert b"<!DOCTYPE html>" in res.data or b"<html" in res.data
+

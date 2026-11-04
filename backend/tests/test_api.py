@@ -164,3 +164,20 @@ async def test_frontend_mount(client: AsyncClient):
     res = await client.get("/")
     assert res.status_code == 200
     assert "text/html" in res.headers.get("content-type", "")
+
+
+@pytest.mark.asyncio
+async def test_dashboard_bundle_endpoint(client: AsyncClient):
+    res1 = await client.get("/api/data")
+    assert res1.status_code == 200
+    data1 = res1.json()
+    assert "historis" in data1
+    assert "forecast" in data1
+    assert "evaluasi" in data1
+    assert len(data1["forecast"]) == 6
+
+    res2 = await client.get("/api/v1/data?ambang_kapasitas=35000")
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert data2["ambang_kapasitas"]["nilai"] == 35000.0
+
