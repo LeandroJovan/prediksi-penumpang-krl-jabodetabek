@@ -53,20 +53,20 @@ input,select{font:13px Inter;padding:8px 14px;border:1px solid var(--line);borde
 .prose h2{margin:16px 0 4px}.prose p{max-width:72ch;margin:0 0 8px;color:#334155}
 .leg{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13px}
 /* dashboard grid */
-.dg{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;grid-template-areas:"st chart k1" "k2 chart k3" "tb tb ins";gap:16px}
+.dg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"k2 k1 k3" "chart chart st" "tb tb ins";gap:16px}
 .dg .st{grid-area:st}.dg .cc{grid-area:chart}.dg .k1{grid-area:k1}.dg .k2{grid-area:k2}.dg .k3{grid-area:k3}.dg .tb{grid-area:tb}.dg .ins{grid-area:ins}
 .dg .cc .chart{height:calc(100% - 56px);min-height:320px}.cc{display:flex;flex-direction:column}.cc .chart{flex:1}
 .navy{background:var(--navy);color:#fff;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 2px,transparent 2px 10px)}
 .navy .sub,.navy dt{color:#9fb0cc}.navy .rb{background:rgba(255,255,255,.12);color:#fff}
 .navy dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}.navy dd{margin:0;font-weight:600;text-align:right}
 .st .num{font-size:30px;margin:6px 0}.st p.why{font-size:12px;color:#b6c4dc;margin-top:14px}
-@media(max-width:1200px){.dg{grid-template-columns:1fr 1fr;grid-template-areas:"st k1" "k2 k3" "chart chart" "tb tb" "ins ins"}.dg .cc .chart{height:340px}}
+@media(max-width:1100px){.dg{grid-template-columns:1fr 1fr;grid-template-areas:"k2 k1" "k3 st" "chart chart" "tb tb" "ins ins"}.dg .cc .chart{height:340px}}
 @media(max-width:1000px){.g4{grid-template-columns:1fr 1fr}.g2,.g2e{grid-template-columns:1fr}}
 @media(max-width:700px){
 body{display:block}#topbar{margin:10px;position:sticky;top:10px;z-index:8}.chip2:first-of-type{display:none}main{padding:14px 12px 96px}
 #sidebar{position:fixed;left:10px;right:10px;bottom:10px;top:auto;margin:0;z-index:9;display:block}#toggle,.sb-home{display:none}
 #nav{display:flex;padding:6px;border-radius:26px;box-shadow:0 6px 24px rgba(15,23,42,.18);justify-content:space-around}#nav a{padding:0;justify-content:center;flex:1}
-h1{font-size:26px}.g4{grid-template-columns:1fr}.dg{grid-template-columns:1fr;grid-template-areas:"st" "k1" "k2" "k3" "chart" "tb" "ins"}}
+h1{font-size:26px}.g4{grid-template-columns:1fr}.dg{grid-template-columns:1fr;grid-template-areas:"k2" "k1" "k3" "chart" "st" "tb" "ins"}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* Beranda */
