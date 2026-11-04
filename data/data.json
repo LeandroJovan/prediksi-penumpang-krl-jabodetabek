@@ -1,0 +1,839 @@
+{
+  "meta": {
+    "sumber": "BPS & KAI Commuter (Pipeline ML Cerdas)",
+    "satuan": "ribu penumpang",
+    "periode_data": "2016-01 s.d. 2026-08",
+    "diperbarui": "2026-11-04",
+    "model_terpilih": "LightGBM + Conformal CQR",
+    "lebaran": [
+      "2017-06",
+      "2018-06",
+      "2019-06",
+      "2022-05",
+      "2023-04",
+      "2024-04",
+      "2025-03",
+      "2026-03"
+    ]
+  },
+  "ambang_kapasitas": {
+    "nilai": 34000.0,
+    "keterangan": "Batas teknis kapasitas operasional KRL Jabodetabek"
+  },
+  "historis": [
+    {
+      "bulan": "2016-01",
+      "nilai": 22238,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-02",
+      "nilai": 21229,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-03",
+      "nilai": 23206,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-04",
+      "nilai": 23149,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-05",
+      "nilai": 24401,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2016-06",
+      "nilai": 23821,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-07",
+      "nilai": 21574,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2016-08",
+      "nilai": 23923,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2016-09",
+      "nilai": 23570,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-10",
+      "nilai": 24533,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2016-11",
+      "nilai": 24104,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2016-12",
+      "nilai": 24841,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2017-01",
+      "nilai": 24185,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-02",
+      "nilai": 21743,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2017-03",
+      "nilai": 25775,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-04",
+      "nilai": 25411,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2017-05",
+      "nilai": 27385,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2017-06",
+      "nilai": 24432,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2017-07",
+      "nilai": 27016,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2017-08",
+      "nilai": 27679,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-09",
+      "nilai": 26158,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2017-10",
+      "nilai": 28765,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-11",
+      "nilai": 28246,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2017-12",
+      "nilai": 29059,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-01",
+      "nilai": 28075,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2018-02",
+      "nilai": 25362,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-03",
+      "nilai": 29223,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-04",
+      "nilai": 28942,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-05",
+      "nilai": 28995,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2018-06",
+      "nilai": 24833,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2018-07",
+      "nilai": 29086,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2018-08",
+      "nilai": 28098,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-09",
+      "nilai": 27618,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2018-10",
+      "nilai": 29317,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2018-11",
+      "nilai": 28049,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2018-12",
+      "nilai": 29201,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2019-01",
+      "nilai": 27768,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2019-02",
+      "nilai": 25305,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2019-03",
+      "nilai": 28366,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2019-04",
+      "nilai": 28062,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2019-05",
+      "nilai": 28369,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-06",
+      "nilai": 25816,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2019-07",
+      "nilai": 29714,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2019-08",
+      "nilai": 27651,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2019-09",
+      "nilai": 28293,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-10",
+      "nilai": 29278,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2019-11",
+      "nilai": 28563,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2019-12",
+      "nilai": 28860,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-01",
+      "nilai": 26733,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-02",
+      "nilai": 25616,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2020-03",
+      "nilai": 18548,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-04",
+      "nilai": 5138,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-05",
+      "nilai": 5077,
+      "hari_kerja": 17
+    },
+    {
+      "bulan": "2020-06",
+      "nilai": 8591,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-07",
+      "nilai": 11116,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-08",
+      "nilai": 11014,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2020-09",
+      "nilai": 9678,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2020-10",
+      "nilai": 10128,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-11",
+      "nilai": 11622,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2020-12",
+      "nilai": 11330,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-01",
+      "nilai": 10149,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-02",
+      "nilai": 9796,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2021-03",
+      "nilai": 12041,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-04",
+      "nilai": 12452,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-05",
+      "nilai": 12230,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2021-06",
+      "nilai": 11978,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-07",
+      "nilai": 5102,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2021-08",
+      "nilai": 5947,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-09",
+      "nilai": 8693,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-10",
+      "nilai": 11347,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2021-11",
+      "nilai": 12792,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2021-12",
+      "nilai": 14213,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2022-01",
+      "nilai": 14484,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-02",
+      "nilai": 10499,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2022-03",
+      "nilai": 15735,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-04",
+      "nilai": 15890,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2022-05",
+      "nilai": 17075,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2022-06",
+      "nilai": 18326,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-07",
+      "nilai": 19467,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-08",
+      "nilai": 19388,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-09",
+      "nilai": 20587,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-10",
+      "nilai": 21807,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2022-11",
+      "nilai": 21589,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2022-12",
+      "nilai": 23118,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-01",
+      "nilai": 22717,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-02",
+      "nilai": 20811,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-03",
+      "nilai": 23856,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-04",
+      "nilai": 21402,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2023-05",
+      "nilai": 23716,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2023-06",
+      "nilai": 23292,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-07",
+      "nilai": 25211,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-08",
+      "nilai": 24979,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-09",
+      "nilai": 25082,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2023-10",
+      "nilai": 26793,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-11",
+      "nilai": 26171,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2023-12",
+      "nilai": 26861,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-01",
+      "nilai": 26848,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2024-02",
+      "nilai": 24617,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-03",
+      "nilai": 26012,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-04",
+      "nilai": 25543,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-05",
+      "nilai": 27057,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-06",
+      "nilai": 26739,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2024-07",
+      "nilai": 29241,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2024-08",
+      "nilai": 28209,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2024-09",
+      "nilai": 27608,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-10",
+      "nilai": 29933,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2024-11",
+      "nilai": 27522,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2024-12",
+      "nilai": 28825,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-01",
+      "nilai": 27522,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-02",
+      "nilai": 27204,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-03",
+      "nilai": 26974,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-04",
+      "nilai": 27552,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-05",
+      "nilai": 28561,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2025-06",
+      "nilai": 28205,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2025-07",
+      "nilai": 31401,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2025-08",
+      "nilai": 28947,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-09",
+      "nilai": 28741,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2025-10",
+      "nilai": 31777,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2025-11",
+      "nilai": 30373,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2025-12",
+      "nilai": 31640,
+      "hari_kerja": 22
+    },
+    {
+      "bulan": "2026-01",
+      "nilai": 30226,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2026-02",
+      "nilai": 27795,
+      "hari_kerja": 19
+    },
+    {
+      "bulan": "2026-03",
+      "nilai": 29959,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2026-04",
+      "nilai": 30587,
+      "hari_kerja": 21
+    },
+    {
+      "bulan": "2026-05",
+      "nilai": 28967,
+      "hari_kerja": 18
+    },
+    {
+      "bulan": "2026-06",
+      "nilai": 30468,
+      "hari_kerja": 20
+    },
+    {
+      "bulan": "2026-07",
+      "nilai": 32467,
+      "hari_kerja": 23
+    },
+    {
+      "bulan": "2026-08",
+      "nilai": 30135,
+      "hari_kerja": 19
+    }
+  ],
+  "forecast": [
+    {
+      "bulan": "2026-09",
+      "horizon": 1,
+      "titik": 31304.6,
+      "l80": 29643.8,
+      "u80": 32965.5,
+      "l95": 29039.1,
+      "u95": 33570.1
+    },
+    {
+      "bulan": "2026-10",
+      "horizon": 2,
+      "titik": 31365.3,
+      "l80": 29743.5,
+      "u80": 32987.1,
+      "l95": 28347.4,
+      "u95": 34383.3
+    },
+    {
+      "bulan": "2026-11",
+      "horizon": 3,
+      "titik": 30879.1,
+      "l80": 29411.7,
+      "u80": 32346.4,
+      "l95": 27921.0,
+      "u95": 33837.1
+    },
+    {
+      "bulan": "2026-12",
+      "horizon": 4,
+      "titik": 31102.3,
+      "l80": 28991.8,
+      "u80": 33212.8,
+      "l95": 27862.1,
+      "u95": 34342.6
+    },
+    {
+      "bulan": "2027-01",
+      "horizon": 5,
+      "titik": 31280.4,
+      "l80": 28161.7,
+      "u80": 34399.1,
+      "l95": 27205.6,
+      "u95": 35355.3
+    },
+    {
+      "bulan": "2027-02",
+      "horizon": 6,
+      "titik": 30805.3,
+      "l80": 27815.9,
+      "u80": 33794.7,
+      "l95": 26750.1,
+      "u95": 34860.5
+    }
+  ],
+  "evaluasi": {
+    "keseluruhan": [
+      {
+        "model": "ETS",
+        "n": 465,
+        "mae": 3656.0,
+        "rmse": 7494.9,
+        "mape": 0.0,
+        "mase": 1.874
+      },
+      {
+        "model": "ETS_tanpa_musim",
+        "n": 465,
+        "mae": 3545.1,
+        "rmse": 7211.5,
+        "mape": 0.0,
+        "mase": 1.817
+      },
+      {
+        "model": "LightGBM",
+        "n": 465,
+        "mae": 3602.2,
+        "rmse": 6228.4,
+        "mape": 0.0,
+        "mase": 1.847
+      },
+      {
+        "model": "SARIMA",
+        "n": 465,
+        "mae": 3805.1,
+        "rmse": 6801.9,
+        "mape": 0.0,
+        "mase": 1.951
+      },
+      {
+        "model": "SARIMAX",
+        "n": 465,
+        "mae": 3338.5,
+        "rmse": 5437.5,
+        "mape": 0.0,
+        "mase": 1.711
+      },
+      {
+        "model": "naive",
+        "n": 465,
+        "mae": 2701.1,
+        "rmse": 4378.3,
+        "mape": 0.0,
+        "mase": 1.385
+      },
+      {
+        "model": "seasonal_naive",
+        "n": 465,
+        "mae": 6130.0,
+        "rmse": 8365.2,
+        "mape": 0.0,
+        "mase": 3.142
+      }
+    ],
+    "pasca_covid": [
+      {
+        "model": "ETS",
+        "n": 180,
+        "mae": 1674.8,
+        "rmse": 2093.0,
+        "mape": 0.0,
+        "mase": 0.859
+      },
+      {
+        "model": "ETS_tanpa_musim",
+        "n": 180,
+        "mae": 1527.9,
+        "rmse": 1877.2,
+        "mape": 0.0,
+        "mase": 0.783
+      },
+      {
+        "model": "LightGBM",
+        "n": 180,
+        "mae": 1170.8,
+        "rmse": 1521.4,
+        "mape": 0.0,
+        "mase": 0.6
+      },
+      {
+        "model": "SARIMA",
+        "n": 180,
+        "mae": 1279.7,
+        "rmse": 1600.4,
+        "mape": 0.0,
+        "mase": 0.656
+      },
+      {
+        "model": "SARIMAX",
+        "n": 180,
+        "mae": 1022.5,
+        "rmse": 1286.5,
+        "mape": 0.0,
+        "mase": 0.524
+      },
+      {
+        "model": "naive",
+        "n": 180,
+        "mae": 1549.0,
+        "rmse": 1915.7,
+        "mape": 0.0,
+        "mase": 0.794
+      },
+      {
+        "model": "seasonal_naive",
+        "n": 180,
+        "mae": 2117.5,
+        "rmse": 2362.9,
+        "mape": 0.0,
+        "mase": 1.086
+      }
+    ]
+  }
+}
