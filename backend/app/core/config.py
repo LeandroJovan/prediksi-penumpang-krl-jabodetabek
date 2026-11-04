@@ -4,19 +4,25 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+REPO_ROOT: Path = Path(__file__).resolve().parents[3]
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=[".env", "backend/.env"],
+        extra="ignore",
+    )
 
     app_name: str = "KRL Forecast API"
     app_env: str = "development"
-    database_url: str
-    redis_url: str
-    cors_origins: str = ""
+    database_url: str = "sqlite+aiosqlite:///./krl_forecast.db"
+    redis_url: str | None = None
+    cors_origins: str = "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://localhost:5000,http://localhost:8501"
     krl_api_key: str | None = None
-    artifacts_dir: Path = Path("artifacts/models")
+    artifacts_dir: Path = REPO_ROOT / "artifacts/models"
     forecast_cache_ttl_seconds: int = Field(default=3600, ge=1)
     inference_timeout_seconds: int = Field(default=15, ge=1)
+    krl_capacity_monthly_ribu: float = Field(default=34000.0, gt=0)
     krl_capacity_weekday_ribu: float | None = Field(default=None, gt=0)
     krl_capacity_weekend_ribu: float | None = Field(default=None, gt=0)
     krl_risk_waspada_ratio: float = Field(default=0.90, gt=0, lt=1)
