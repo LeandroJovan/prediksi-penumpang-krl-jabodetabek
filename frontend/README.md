@@ -67,4 +67,4 @@ Script tersebut akan secara otomatis:
 3. **Prediksi Penumpang (`#prediksi`)**: Proyeksi 1–6 bulan dengan rentang ketidakpastian 80% & 95%, serta fitur ekspor CSV.
 4. **Analisis Historis (`#historis`)**: Eksplorasi deret waktu 2016–2026, dekomposisi tahunan, pola musiman, dampak Lebaran & COVID-19.
 5. **Risiko Kapasitas (`#risiko`)**: Komparasi batas atas 95% terhadap ambang kapasitas dengan simulasi sensitivitas ($\pm 5\%$, $\pm 10\%$).
-6. **Evaluasi Model (`#evaluasi`)**: Metrik ilmiah komparatif (MASE, PICP, MPIW) seluruh periode vs pasca-COVID tanpa kebocoran data.
+6. **Asisten AI (`#chat`)**: Chatbot cerdas interaktif untuk tanya jawab data, ringkasan eksekutif, analisis risiko kapasitas, dan rekomendasi kebijakan operasional armada.
