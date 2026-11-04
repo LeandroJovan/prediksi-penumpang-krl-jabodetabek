@@ -112,9 +112,9 @@ const pages = {
       <a class="btn acc" href="#dashboard">Buka dashboard</a></header>
 
     <section class="lp-hero"><div class="wrap lp-hg">
-      <div class="lp-copy"><span class="lp-eyebrow">Prediksi &amp; peringatan dini kapasitas</span>
-        <h1>Prediksi Penumpang <em>KRL Jabodetabek</em> yang Lebih Siap</h1>
-        <p>Perkirakan jumlah penumpang 1–6 bulan ke depan, lihat seberapa pasti perkiraannya, dan terima peringatan dini sebelum kapasitas terlampaui.</p>
+      <div class="lp-copy"><span class="lp-eyebrow">Forecasting &amp; Deteksi Risiko Kapasitas</span>
+        <h1>Prediksi Penumpang <em>KRL Jabodetabek</em></h1>
+        <p>Pantau proyeksi jumlah penumpang 1–6 bulan ke depan, rentang ketidakpastian prediksi, serta peringatan dini sebelum lonjakan melebihi kapasitas operasional.</p>
         <div class="hero-cta"><a class="btn acc lg" href="#dashboard">Masuk ke dashboard</a></div>
         <ul class="lp-marks"><li>${I(P.check, 18)}Data BPS</li><li>${I(P.check, 18)}Interval 80% &amp; 95%</li><li>${I(P.check, 18)}Evaluasi transparan</li></ul></div>
       <div class="lp-scene">
