@@ -44,8 +44,13 @@ testpaths = ["tests"]
 pythonpath = [".."]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
+# B008: `Depends(...)`/`Query(...)` di default argument adalah idiom resmi FastAPI.
+ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "krl_core"]

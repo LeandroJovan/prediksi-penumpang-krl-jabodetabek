@@ -501,9 +501,9 @@ if __name__ == "__main__":
     # Sinkronisasi hanya saat server Flask dijalankan langsung (bukan saat modul di-import).
     sync_data_json()
     port = int(os.environ.get("PORT", 5000))
-    print(f"============================================================")
+    print("============================================================")
     print(f"  Starting KRL Forecast Flask API on http://127.0.0.1:{port}")
     print(f"  Dashboard Front-End : http://127.0.0.1:{port}/")
     print(f"  Health Check        : http://127.0.0.1:{port}/api/health")
-    print(f"============================================================")
+    print("============================================================")
     app.run(host="127.0.0.1", port=port, debug=False)

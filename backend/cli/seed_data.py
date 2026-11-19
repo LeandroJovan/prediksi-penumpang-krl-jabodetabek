@@ -1,11 +1,11 @@
 """Seed database from committed processed CSV files and outputs."""
 import asyncio
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-import uuid
 
 import pandas as pd
-from sqlalchemy import delete, select
+from sqlalchemy import select
 
 from backend.app.core.config import REPO_ROOT
 from backend.app.core.pipeline_data import DATA_FINAL, data_bounds
@@ -100,7 +100,9 @@ async def seed_all(session=None) -> None:
         # 3. Seed ModelRun (LightGBM CQR & SARIMAX)
         data_start, data_end = data_bounds(ROOT)
         if data_start is None or data_end is None:
-            raise RuntimeError(f"{ROOT / DATA_FINAL} tidak ditemukan/kosong; tidak dapat menentukan rentang data model.")
+            raise RuntimeError(
+                f"{ROOT / DATA_FINAL} tidak ditemukan/kosong; tidak dapat menentukan rentang data model."
+            )
         existing_runs = set((await sess.execute(select(ModelRun.run_id))).scalars().all())
 
         lgbm_run_id = "lgbm_cqr_v1"

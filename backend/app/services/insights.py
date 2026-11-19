@@ -5,7 +5,7 @@ import logging
 import re
 import weakref
 from datetime import date, datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 import httpx
 from redis.asyncio import Redis
@@ -33,40 +33,129 @@ ALLOWED_ACTIONS = [
     "monitor_capacity", "review_operational_readiness", "prepare_contingency_plan", "review_capacity_assumption",
 ]
 
+MONTHS_EN = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+TEXT = {
+    "id": {
+        "certainty": "Perkiraan masih bisa meleset cukup jauh; gunakan sebagai arahan perencanaan, bukan angka pasti.",
+        "no_data": "Data prediksi belum tersedia. Insight akan muncul setelah data forecast tersedia.",
+        "peak_nocap": (
+            "Bulan paling padat: {period}. Perkiraan utama {point} juta penumpang; "
+            "skenario padat {upper} juta. "
+            "Kapasitas layanan belum diatur, sehingga status risiko belum bisa ditentukan."
+        ),
+        "act_nocap": "Lengkapi parameter kapasitas layanan agar status risiko dapat dihitung.",
+        "act_review": "Tinjau ulang perkiraan saat data aktual bulan baru masuk.",
+        "concl_nocap": (
+            "Kapasitas layanan belum diatur, sehingga status risiko belum bisa ditentukan. "
+            "Perkiraan penumpang tetap dapat dilihat pada detail teknis."
+        ),
+        "concl_kritis": (
+            "{k} dari {n} bulan ke depan diperkirakan berisiko melebihi kapasitas layanan. "
+            "Puncaknya {period}."
+        ),
+        "concl_waspada": (
+            "Tidak ada bulan yang diperkirakan melebihi kapasitas, tetapi "
+            "{w} dari {n} bulan perlu diawasi. Puncaknya {period}."
+        ),
+        "concl_aman": "Semua {n} bulan ke depan diperkirakan masih dalam batas kapasitas.",
+        "below": "di bawah",
+        "above": "di atas",
+        "equal": "setara dengan",
+        "peak": (
+            "Bulan paling padat: {period}. Perkiraan utama {point} juta penumpang "
+            "({cmp} kapasitas {cap} juta); skenario padat {upper} juta ({pct}% dari kapasitas)."
+        ),
+        "low_aman": "Bulan yang mulai longgar",
+        "low_waspada": "Bulan yang perlu diawasi",
+        "low_other": "Bulan dengan tekanan paling rendah",
+        "lowest": "{label}: {period}. Skenario padat {upper} juta ({pct}% dari kapasitas).",
+        "act_add": "Tambah perjalanan atau rangkaian pada bulan Kritis, terutama {period}.",
+        "act_crowd": "Atur arus penumpang di stasiun padat pada jam sibuk, terutama {period}.",
+        "act_keep": "Pertahankan jadwal operasional dan pantau data aktual bulan baru.",
+    },
+    "en": {
+        "certainty": "The forecast can still miss by a wide margin; use it as planning guidance, not an exact figure.",
+        "no_data": "Forecast data is not available yet. Insights will appear once forecast data is available.",
+        "peak_nocap": (
+            "Busiest month: {period}. Main estimate {point} million passengers; "
+            "busy scenario {upper} million. "
+            "Service capacity is not configured, so the risk status cannot be determined."
+        ),
+        "act_nocap": "Provide the service capacity parameters so the risk status can be calculated.",
+        "act_review": "Review the forecast when actual data for the new month arrives.",
+        "concl_nocap": (
+            "Service capacity is not configured, so the risk status cannot be determined. "
+            "Passenger forecasts are still available in the technical details."
+        ),
+        "concl_kritis": (
+            "{k} of the next {n} months are forecast to risk exceeding service capacity. "
+            "The peak is {period}."
+        ),
+        "concl_waspada": (
+            "No month is forecast to exceed capacity, but "
+            "{w} of the next {n} months need monitoring. The peak is {period}."
+        ),
+        "concl_aman": "All {n} upcoming months are forecast to stay within capacity.",
+        "below": "below",
+        "above": "above",
+        "equal": "equal to",
+        "peak": (
+            "Busiest month: {period}. Main estimate {point} million passengers "
+            "({cmp} the capacity of {cap} million); busy scenario {upper} million ({pct}% of capacity)."
+        ),
+        "low_aman": "Month with spare room",
+        "low_waspada": "Month to monitor",
+        "low_other": "Month with the lowest pressure",
+        "lowest": "{label}: {period}. Busy scenario {upper} million ({pct}% of capacity).",
+        "act_add": "Add trips or train sets in Critical months, especially {period}.",
+        "act_crowd": "Manage passenger flow at busy stations during peak hours, especially {period}.",
+        "act_keep": "Keep the operating schedule and monitor actual data for the new month.",
+    },
+}
+
 MONTHS_ID = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ]
 
 
-def _fmt_int(value: float | int | None) -> str:
+def _fmt_int(value: float | int | None, lang: str = "id") -> str:
     if value is None:
         return "--"
-    return f"{value:,.0f}".replace(",", ".")
+    text = f"{value:,.0f}"
+    return text.replace(",", ".") if lang == "id" else text
 
 
-def _fmt_one(value: float | int | None) -> str:
+def _fmt_one(value: float | int | None, lang: str = "id") -> str:
     if value is None:
         return "--"
     rounded = Decimal(str(value)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
-    return f"{rounded:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    text = f"{rounded:,.1f}"
+    if lang == "id":
+        return text.replace(",", "X").replace(".", ",").replace("X", ".")
+    return text
 
 
-def _fmt_juta(value: float | int | None) -> str:
+def _fmt_juta(value: float | int | None, lang: str = "id") -> str:
     if value is None:
         return "--"
-    return _fmt_one(float(value) / 1000.0)
+    return _fmt_one(float(value) / 1000.0, lang)
 
 
-def _fmt_pct(value: float | int | None) -> str:
+def _fmt_pct(value: float | int | None, lang: str = "id") -> str:
     if value is None:
         return "--"
-    return _fmt_one(value)
+    return _fmt_one(value, lang)
 
 
-def _period_label(value: str | date | datetime | None) -> str:
+def _period_label(value: str | date | datetime | None, lang: str = "id") -> str:
     if value is None:
         return "-"
+    months = MONTHS_EN if lang == "en" else MONTHS_ID
     if isinstance(value, (date, datetime)):
         year, month = value.year, value.month
     else:
@@ -75,7 +164,7 @@ def _period_label(value: str | date | datetime | None) -> str:
             return str(value)
         year, month = int(parts[0]), int(parts[1])
     if 1 <= month <= 12:
-        return f"{MONTHS_ID[month - 1]} {year}"
+        return f"{months[month - 1]} {year}"
     return str(value)
 
 
@@ -158,6 +247,8 @@ def _fallback_recommendations(actions: list[str], fact_ids: list[str], high: boo
 
 
 def fallback(facts: dict) -> InsightData:
+    lang = facts.get("language") if facts.get("language") in TEXT else "id"
+    t = TEXT[lang]
     derived = facts.get("derived", {})
     n = int(derived.get("n_months") or 0)
     n_kritis = int(derived.get("n_kritis") or 0)
@@ -172,12 +263,13 @@ def fallback(facts: dict) -> InsightData:
     lowest_util = derived.get("lowest_utilization")
     lowest_status = derived.get("lowest_status") or "belum_ditentukan"
     months = derived.get("months", [])
-    certainty = "Perkiraan masih bisa meleset cukup jauh; gunakan sebagai arahan perencanaan, bukan angka pasti."
+    certainty = t["certainty"]
     risk_fact_ids = [fact["id"] for fact in facts.get("facts", []) if fact.get("kind") == "risk"]
     fact_ids = [fact["id"] for fact in facts.get("facts", [])]
+    peak_label = _period_label(peak_period, lang)
 
     if n == 0:
-        conclusion = "Data prediksi belum tersedia. Insight akan muncul setelah data forecast tersedia."
+        conclusion = t["no_data"]
         return InsightData(
             risk_status="belum_ditentukan",
             headline=conclusion,
@@ -197,23 +289,16 @@ def fallback(facts: dict) -> InsightData:
         points = [
             InsightPoint(
                 status="belum_ditentukan",
-                text=(
-                    f"Bulan paling padat: {_period_label(peak_period)}. "
-                    f"Perkiraan utama {_fmt_juta(derived.get('peak_point'))} juta penumpang; "
-                    f"skenario padat {_fmt_juta(peak_upper)} juta. "
-                    "Kapasitas layanan belum diatur, sehingga status risiko belum bisa ditentukan."
+                text=t["peak_nocap"].format(
+                    period=peak_label,
+                    point=_fmt_juta(derived.get("peak_point"), lang),
+                    upper=_fmt_juta(peak_upper, lang),
                 ),
             ),
             InsightPoint(status="waspada", text=certainty),
         ]
-        actions = [
-            "Lengkapi parameter kapasitas layanan agar status risiko dapat dihitung.",
-            "Tinjau ulang perkiraan saat data aktual bulan baru masuk.",
-        ]
-        conclusion = (
-            "Kapasitas layanan belum diatur, sehingga status risiko belum bisa ditentukan. "
-            "Perkiraan penumpang tetap dapat dilihat pada detail teknis."
-        )
+        actions = [t["act_nocap"], t["act_review"]]
+        conclusion = t["concl_nocap"]
         return InsightData(
             risk_status="belum_ditentukan",
             headline=conclusion,
@@ -229,62 +314,53 @@ def fallback(facts: dict) -> InsightData:
         )
 
     if n_kritis > 0:
-        conclusion = (
-            f"{n_kritis} dari {n} bulan ke depan diperkirakan berisiko melebihi kapasitas layanan. "
-            f"Puncaknya {_period_label(peak_period)}."
-        )
+        conclusion = t["concl_kritis"].format(k=n_kritis, n=n, period=peak_label)
     elif n_waspada > 0:
-        conclusion = (
-            f"Tidak ada bulan yang diperkirakan melebihi kapasitas, tetapi "
-            f"{n_waspada} dari {n} bulan perlu diawasi. Puncaknya {_period_label(peak_period)}."
-        )
+        conclusion = t["concl_waspada"].format(w=n_waspada, n=n, period=peak_label)
     else:
-        conclusion = f"Semua {n} bulan ke depan diperkirakan masih dalam batas kapasitas."
+        conclusion = t["concl_aman"].format(n=n)
 
     peak_point = derived.get("peak_point") or 0
     if capacity and peak_point < capacity:
-        comparison = "di bawah"
+        comparison = t["below"]
     elif capacity and peak_point > capacity:
-        comparison = "di atas"
+        comparison = t["above"]
     else:
-        comparison = "setara dengan"
+        comparison = t["equal"]
     points = [
         InsightPoint(
             status=peak_status,
-            text=(
-                f"Bulan paling padat: {_period_label(peak_period)}. "
-                f"Perkiraan utama {_fmt_juta(peak_point)} juta penumpang "
-                f"({comparison} kapasitas {_fmt_juta(capacity)} juta); "
-                f"skenario padat {_fmt_juta(peak_upper)} juta "
-                f"({_fmt_pct((peak_util or 0) * 100)}% dari kapasitas)."
+            text=t["peak"].format(
+                period=peak_label,
+                point=_fmt_juta(peak_point, lang),
+                cmp=comparison,
+                cap=_fmt_juta(capacity, lang),
+                upper=_fmt_juta(peak_upper, lang),
+                pct=_fmt_pct((peak_util or 0) * 100, lang),
             ),
         ),
     ]
     if lowest_period:
-        if lowest_status == "aman":
-            lowest_label = "Bulan yang mulai longgar"
-        elif lowest_status == "waspada":
-            lowest_label = "Bulan yang perlu diawasi"
-        else:
-            lowest_label = "Bulan dengan tekanan paling rendah"
+        label_key = {"aman": "low_aman", "waspada": "low_waspada"}.get(lowest_status, "low_other")
         points.append(InsightPoint(
             status=lowest_status,
-            text=(
-                f"{lowest_label}: {_period_label(lowest_period)}. "
-                f"Skenario padat {_fmt_juta(lowest_upper)} juta "
-                f"({_fmt_pct((lowest_util or 0) * 100)}% dari kapasitas)."
+            text=t["lowest"].format(
+                label=t[label_key],
+                period=_period_label(lowest_period, lang),
+                upper=_fmt_juta(lowest_upper, lang),
+                pct=_fmt_pct((lowest_util or 0) * 100, lang),
             ),
         ))
     points.append(InsightPoint(status="waspada", text=certainty))
 
     actions = []
     if n_kritis > 0:
-        actions.append(f"Tambah perjalanan atau rangkaian pada bulan Kritis, terutama {_period_label(peak_period)}.")
+        actions.append(t["act_add"].format(period=peak_label))
     if n_kritis > 0 or n_waspada > 0:
-        actions.append(f"Atur arus penumpang di stasiun padat pada jam sibuk, terutama {_period_label(peak_period)}.")
+        actions.append(t["act_crowd"].format(period=peak_label))
     else:
-        actions.append("Pertahankan jadwal operasional dan pantau data aktual bulan baru.")
-    actions.append("Tinjau ulang perkiraan saat data aktual bulan baru masuk.")
+        actions.append(t["act_keep"])
+    actions.append(t["act_review"])
 
     risk_status = "kritis" if n_kritis > 0 else "waspada" if n_waspada > 0 else "aman"
     return InsightData(
@@ -356,7 +432,8 @@ class InsightService:
     async def generate(self, forecast: ForecastResponse, language: str = "id") -> InsightResponse:
         facts = build_fact_pack(forecast, language)
         canonical = json.dumps(facts, sort_keys=True, separators=(",", ":"))
-        digest = hashlib.sha256(f"{canonical}:{self.settings.ollama_model}:{self.settings.ai_insight_prompt_version}".encode()).hexdigest()
+        version = f"{self.settings.ollama_model}:{self.settings.ai_insight_prompt_version}"
+        digest = hashlib.sha256(f"{canonical}:{version}".encode()).hexdigest()
         key = f"insight:v1:{digest}"
         cached = await self.redis.get(key)
         if cached:
@@ -376,9 +453,16 @@ class InsightService:
             except Exception as exc:
                 logger.warning("Ollama insight gagal (%s: %s); memakai fallback", type(exc).__name__, exc)
                 data = fallback(facts)
-        response = InsightResponse(data=data, meta={"language": language, "cached": False, "model": self.settings.ollama_model,
-                                                     "prompt_version": self.settings.ai_insight_prompt_version,
-                                                     "forecast_model_run_id": forecast.meta.get("model_run_id")})
+        response = InsightResponse(
+            data=data,
+            meta={
+                "language": language,
+                "cached": False,
+                "model": self.settings.ollama_model,
+                "prompt_version": self.settings.ai_insight_prompt_version,
+                "forecast_model_run_id": forecast.meta.get("model_run_id"),
+            },
+        )
         await self.redis.set(key, response.model_dump_json(), ex=self.settings.ai_insight_cache_ttl_seconds)
         return response
 
@@ -387,11 +471,20 @@ class InsightService:
             "Return JSON only. Use only supplied facts. Never alter risk_status. "
             "recommendations[].action must be from allowed_actions. "
             "Provide conclusion (one sentence), points (max 3, each with status and text), "
-            "actions (2-3 concrete steps in simple Indonesian), and technical_details (object). "
-            "Do not invent numbers; use only numbers in the facts. Do not use number ranges."
-        )
-        payload = {"model": self.settings.ollama_model, "stream": False, "format": "json", "options": {"num_predict": 256, "num_ctx": 2048},
-                   "messages": [{"role": "system", "content": system}, {"role": "user", "content": json.dumps(facts)}]}
+            "actions (2-3 concrete steps in simple {language}), and technical_details (object). "
+            "Do not invent numbers; use only numbers in the facts. Do not use number ranges. "
+            "Write every text field in {language}."
+        ).format(language="English" if facts.get("language") == "en" else "Indonesian")
+        payload = {
+            "model": self.settings.ollama_model,
+            "stream": False,
+            "format": "json",
+            "options": {"num_predict": 256, "num_ctx": 2048},
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": json.dumps(facts)},
+            ],
+        }
         async with httpx.AsyncClient(timeout=self.settings.ollama_timeout_seconds) as client:
             response = await client.post(f"{self.settings.ollama_base_url}/api/chat", json=payload)
             response.raise_for_status()
