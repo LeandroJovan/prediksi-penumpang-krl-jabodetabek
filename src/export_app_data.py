@@ -11,6 +11,7 @@ Dijalankan secara otomatis atau manual saat ada pembaruan data/model:
 import json
 import os
 import sys
+from datetime import datetime
 import numpy as np
 import pandas as pd
 
@@ -20,13 +21,23 @@ DIR_ROOT = os.path.dirname(DIR_SRC)
 sys.path.append(DIR_SRC)
 
 import config as cfg
-import models as mdl
 import metrics as mt
 
 PATH_DATA_FINAL = os.path.join(DIR_ROOT, "data", "processed", "data_final.csv")
 PATH_METRIK_BASELINE = os.path.join(DIR_ROOT, "outputs", "metrik_baseline.csv")
 PATH_BACKTEST_BASELINE = os.path.join(DIR_ROOT, "outputs", "backtest_baseline.csv")
+PATH_PREDIKSI = os.path.join(DIR_ROOT, "outputs", "prediksi_future_6bln.csv")
+PATH_Q_HAT = os.path.join(DIR_ROOT, "outputs", "q_hat_conformal.csv")
 PATH_OUTPUT_JSON = os.path.join(DIR_ROOT, "frontend", "data", "data.json")
+
+# Kolom interval pada outputs/prediksi_future_6bln.csv
+KOLOM_TITIK_CSV = "y_pred"
+KOLOM_INTERVAL_CSV = {
+    0.80: ("lower_80", "upper_80"),
+    0.95: ("lower_95", "upper_95"),
+}
+# Toleransi konsistensi antara interval CSV dan (titik + q_hat)
+TOLERANSI_Q = 1.0
 
 
 def generate_dashboard_data():
@@ -59,40 +70,74 @@ def generate_dashboard_data():
     max_hist = df["penumpang_ribu"].max()
     ambang_nilai = cfg.AMBANG_KAPASITAS if (hasattr(cfg, "AMBANG_KAPASITAS") and cfg.AMBANG_KAPASITAS is not None) else 34000
 
-    # 3. Model Peramalan & Conformal Prediction (Interval 80% & 95%)
-    # Menggunakan deret target penuh
-    y_series = df.set_index("tanggal")["penumpang_ribu"].asfreq("MS")
+    # 3. Peramalan & Interval (sumber: keluaran pipeline terkalibrasi)
+    # Titik dan interval dibaca apa adanya dari outputs/prediksi_future_6bln.csv
+    # (LightGBM per hari kerja + interval conformal bergulir). q per-horizon
+    # dibaca dari outputs/q_hat_conformal.csv untuk dicatat dan divalidasi.
+    if not os.path.exists(PATH_PREDIKSI):
+        raise FileNotFoundError(
+            f"File {PATH_PREDIKSI} tidak ditemukan! Jalankan 'python src/peramalan.py' lebih dulu."
+        )
+    if not os.path.exists(PATH_Q_HAT):
+        raise FileNotFoundError(
+            f"File {PATH_Q_HAT} tidak ditemukan! Kalibrasi conformal belum dijalankan."
+        )
+
     horizon_maks = getattr(cfg, "HORIZON_MAKS", 6)
 
-    # Model terpilih: ETS (Holt-Winters)
-    pred_titik = mdl.prediksi_ets(y_series, horizon_maks)
+    pred_df = pd.read_csv(PATH_PREDIKSI)
+    pred_df["tanggal_target"] = pd.to_datetime(pred_df["tanggal_target"])
+    pred_df = pred_df.sort_values("horizon").reset_index(drop=True)
+    pred_df = pred_df.iloc[:horizon_maks]
 
-    # Hitung conformal residual quantiles dari data backtest bersih (pasca-COVID)
-    q80 = 2865.0
-    q95 = 3847.0
+    if list(pred_df["horizon"]) != list(range(1, horizon_maks + 1)):
+        raise ValueError(
+            f"{PATH_PREDIKSI} harus berisi horizon 1..{horizon_maks} tanpa celah/duplikat."
+        )
 
-    if os.path.exists(PATH_BACKTEST_BASELINE):
-        bt_df = pd.read_csv(PATH_BACKTEST_BASELINE)
-        sub_cal = bt_df[(bt_df["model"] == "ETS") & (bt_df["bersih"] == 1)]
-        if len(sub_cal) > 0:
-            err = np.abs(sub_cal["y_true"] - sub_cal["y_pred"])
-            q80 = float(np.quantile(err, 0.80))
-            q95 = float(np.quantile(err, 0.95))
+    q_df = pd.read_csv(PATH_Q_HAT)
+    q_per_horizon = {}
+    for level, (_, _) in KOLOM_INTERVAL_CSV.items():
+        sub_level = q_df[np.isclose(q_df["level"], level, atol=1e-9)]
+        q_map = {}
+        for h in range(1, horizon_maks + 1):
+            baris_q = sub_level[sub_level["horizon"] == h]
+            if baris_q.empty:
+                raise ValueError(
+                    f"q_hat level {level} horizon {h} tidak ditemukan di {PATH_Q_HAT}."
+                )
+            q_map[h] = {
+                "q_lo": float(baris_q["q_lo"].iloc[0]),
+                "q_hi": float(baris_q["q_hi"].iloc[0]),
+            }
+        q_per_horizon[level] = q_map
 
-    # Bentuk array forecast untuk 6 bulan ke depan
-    origin_terakhir = y_series.index[-1]
+    # Bentuk array forecast untuk 6 bulan ke depan; validasi CSV == titik + q_hat
     forecast = []
-    for h in range(1, horizon_maks + 1):
-        target_date = origin_terakhir + pd.DateOffset(months=h)
-        target_str = target_date.strftime("%Y-%m")
-        pt = float(pred_titik[h - 1])
+    for baris in pred_df.itertuples(index=False):
+        h = int(baris.horizon)
+        pt = float(getattr(baris, KOLOM_TITIK_CSV))
+        interval = {}
+        for level, (kol_lo, kol_hi) in KOLOM_INTERVAL_CSV.items():
+            lo = float(getattr(baris, kol_lo))
+            hi = float(getattr(baris, kol_hi))
+            q = q_per_horizon[level][h]
+            if (abs((pt + q["q_lo"]) - lo) > TOLERANSI_Q
+                    or abs((pt + q["q_hi"]) - hi) > TOLERANSI_Q):
+                raise ValueError(
+                    f"Interval {int(level * 100)}% horizon {h} pada {PATH_PREDIKSI} "
+                    f"tidak konsisten dengan titik + q_hat ({PATH_Q_HAT}). "
+                    "Regenerasi prediksi_future_6bln.csv dari q_hat terbaru."
+                )
+            interval[level] = (lo, hi)
+
         forecast.append({
-            "bulan": target_str,
+            "bulan": baris.tanggal_target.strftime("%Y-%m"),
             "titik": round(pt),
-            "l80": max(0, round(pt - q80)),
-            "u80": round(pt + q80),
-            "l95": max(0, round(pt - q95)),
-            "u95": round(pt + q95)
+            "l80": round(interval[0.80][0]),
+            "u80": round(interval[0.80][1]),
+            "l95": round(interval[0.95][0]),
+            "u95": round(interval[0.95][1]),
         })
 
     # 4. Evaluasi Model
@@ -176,14 +221,32 @@ def generate_dashboard_data():
             if len(row) > 0:
                 item["mase"] = round(float(row["MASE"].values[0]), 2)
 
+    q_meta = {
+        f"{int(round(level * 100))}": {
+            str(h): {
+                "q_lo": round(q_per_horizon[level][h]["q_lo"], 4),
+                "q_hi": round(q_per_horizon[level][h]["q_hi"], 4),
+            }
+            for h in range(1, horizon_maks + 1)
+        }
+        for level in KOLOM_INTERVAL_CSV
+    }
+
     data_payload = {
         "_catatan": "Otomatis digenerate dari pipeline Machine Learning tim (src/export_app_data.py). Satuan: ribu penumpang. Format bulan: YYYY-MM.",
         "meta": {
             "sumber": "BPS",
             "satuan": "ribu penumpang",
             "periode_data": periode_data,
-            "diperbarui": "Agustus 2026",
-            "model_terpilih": "ETS (Holt-Winters)",
+            "diperbarui": datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z%z"),
+            "model_terpilih": "LightGBM",
+            "model_catatan": "Sementara mengikuti outputs/prediksi_future_6bln.csv; keputusan model final ditetapkan terpisah.",
+            "sumber_file": {
+                "forecast_dan_interval": "outputs/prediksi_future_6bln.csv",
+                "q_per_horizon": "outputs/q_hat_conformal.csv",
+                "data_historis": "data/processed/data_final.csv",
+            },
+            "q_per_horizon": q_meta,
             "lebaran": lebaran_months
         },
         "ambang_kapasitas": {
