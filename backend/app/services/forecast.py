@@ -12,6 +12,7 @@ from backend.app.core.errors import AppError
 from backend.app.core.forecast_csv import ForecastCsvError, read_forecast_csv
 from backend.app.core.pipeline_data import data_bounds
 from backend.app.db.models import Actual, Calendar, ModelRun
+from backend.app.db.queries import get_active_model_run
 from backend.app.ml.loader import load_bundle
 from backend.app.ml.validation import validate_forecast
 from backend.app.schemas.forecast import ForecastItem, ForecastResponse, Interval
@@ -123,9 +124,7 @@ class ForecastService:
 
     async def _active_model_or_default(self) -> ModelRun | None:
         try:
-            return (
-                await self.session.execute(select(ModelRun).where(ModelRun.is_active.is_(True)))
-            ).scalar_one_or_none()
+            return await get_active_model_run(self.session)
         except Exception:
             logger.exception("Gagal membaca model aktif dari DB")
             return None

@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.api.deps import db_session, settings
 from backend.app.core.config import REPO_ROOT, Settings
 from backend.app.core.pipeline_data import read_csv_async
-from backend.app.db.models import Actual, ModelRun
+from backend.app.db.models import Actual
+from backend.app.db.queries import get_active_model_run
 
 ROOT = REPO_ROOT
 logger = logging.getLogger("krl_backend.meta")
@@ -33,9 +34,7 @@ async def metadata(
             start_date = minimum.isoformat()
             end_date = maximum.isoformat()
             obs_count = count
-        active = (
-            await session.execute(select(ModelRun).where(ModelRun.is_active.is_(True)))
-        ).scalar_one_or_none()
+        active = await get_active_model_run(session)
         if active is not None:
             active_model = {
                 "run_id": active.run_id,

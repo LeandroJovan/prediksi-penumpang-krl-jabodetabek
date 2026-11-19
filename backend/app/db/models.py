@@ -6,6 +6,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     Numeric,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -42,6 +44,16 @@ class Calendar(Base):
 
 class ModelRun(Base):
     __tablename__ = "model_runs"
+    # Maksimal satu model aktif (partial unique index; hanya terbentuk pada DB/tabel baru).
+    __table_args__ = (
+        Index(
+            "uq_model_runs_single_active",
+            "is_active",
+            unique=True,
+            postgresql_where=text("is_active"),
+            sqlite_where=text("is_active"),
+        ),
+    )
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     algorithm: Mapped[str] = mapped_column(String(64), nullable=False)
