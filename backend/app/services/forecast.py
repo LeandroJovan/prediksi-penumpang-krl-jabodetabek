@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.config import REPO_ROOT, Settings
 from backend.app.core.errors import AppError
+from backend.app.core.forecast_csv import ForecastCsvError, read_forecast_csv
 from backend.app.db.models import Actual, Calendar, ModelRun
 from backend.app.ml.loader import load_bundle
 from backend.app.ml.validation import validate_forecast
@@ -163,7 +164,10 @@ class ForecastService:
         if not csv_path.exists():
             raise AppError("DATA_NOT_AVAILABLE", 503, "Forecast output CSV not found.")
 
-        df = pd.read_csv(csv_path)
+        try:
+            df = read_forecast_csv(csv_path)
+        except ForecastCsvError as exc:
+            raise AppError("DATA_NOT_AVAILABLE", 503, str(exc)) from exc
         df = df[df["horizon"].isin(requested_horizons)]
 
         calendar_by_period = {}

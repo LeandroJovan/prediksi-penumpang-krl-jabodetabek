@@ -24,8 +24,10 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / "src"))
 
-import config as cfg
-import risk as rsk
+import config as cfg  # noqa: E402
+import risk as rsk  # noqa: E402
+
+from backend.app.core.forecast_csv import read_forecast_csv  # noqa: E402
 
 # Inisialisasi Flask App
 app = Flask(__name__, static_folder=str(BASE_DIR / "frontend"))
@@ -91,7 +93,7 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
     fc_file = FOLDER_OUTPUT / "prediksi_future_6bln.csv"
     fc_list = []
     if fc_file.exists():
-        df_fc = pd.read_csv(fc_file)
+        df_fc = read_forecast_csv(fc_file)
         for r in df_fc.itertuples():
             h = int(r.horizon)
             bln = (pd.Timestamp("2026-08-01") + pd.DateOffset(months=h)).strftime("%Y-%m")
@@ -195,7 +197,7 @@ def get_forecast():
     if not path_file.exists():
         return jsonify({"error": "Data prakiraan belum di-generate"}), 404
 
-    df = pd.read_csv(path_file)
+    df = read_forecast_csv(path_file)
     ambang = float(request.args.get("ambang_kapasitas", cfg.AMBANG_KAPASITAS))
     waspada = float(request.args.get("batas_waspada", cfg.BATAS_WASPADA))
     basis_interval = request.args.get("basis_interval", "95")
@@ -235,7 +237,7 @@ def simulate_risk():
     if not path_file.exists():
         return jsonify({"error": "Data prakiraan tidak ditemukan"}), 404
 
-    df = pd.read_csv(path_file)
+    df = read_forecast_csv(path_file)
     df_hasil = rsk.klasifikasi_tabel_risiko(
         df,
         ambang_kapasitas=ambang,
@@ -297,7 +299,7 @@ def get_sensitivity():
     if not path_file.exists():
         fc_path = FOLDER_OUTPUT / "prediksi_future_6bln.csv"
         if fc_path.exists():
-            df_fc = pd.read_csv(fc_path)
+            df_fc = read_forecast_csv(fc_path)
             df_sens = rsk.analisis_sensitivitas(df_fc)
             return jsonify(df_sens.to_dict(orient="records"))
         return jsonify({"error": "Data analisis sensitivitas belum tersedia"}), 404
