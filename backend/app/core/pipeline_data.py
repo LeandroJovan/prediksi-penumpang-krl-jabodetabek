@@ -48,3 +48,35 @@ def target_periods(frame: pd.DataFrame, last_actual: date | None = None) -> list
     if last is None:
         raise ValueError("Periode target tidak dapat ditentukan: tanggal_target dan data aktual tidak ada.")
     return [(pd.Timestamp(last) + pd.DateOffset(months=int(h))).date() for h in frame["horizon"]]
+
+
+PICP_CALIBRATION = "bergulir (sahih)"
+
+
+def load_picp(path: Path) -> tuple[dict[int, tuple[float, float]], tuple[float | None, float | None]]:
+    """Baca cakupan interval (PICP) HASIL BACKTEST dari pipeline, sebagai fraksi 0-1.
+
+    Hanya kalibrasi bergulir yang sahih; baris "in-sample (versi lama)" sengaja diabaikan karena
+    tidak jujur (100% cakupan). Return (per_horizon, keseluruhan berbobot n_uji); None jika tidak ada data.
+    """
+    empty: tuple[dict[int, tuple[float, float]], tuple[None, None]] = ({}, (None, None))
+    if not path.exists():
+        return empty
+    df = pd.read_csv(path)
+    df = df[df["kalibrasi"] == PICP_CALIBRATION]
+    by_level = {level: g.set_index("horizon") for level, g in df.groupby("level")}
+    if 80 not in by_level or 95 not in by_level:
+        return empty
+    p80, p95 = by_level[80], by_level[95]
+    horizons = sorted(set(p80.index) & set(p95.index))
+    per_h = {
+        int(h): (float(p80.loc[h, "PICP_%"]) / 100.0, float(p95.loc[h, "PICP_%"]) / 100.0)
+        for h in horizons
+    }
+
+    def weighted(frame: pd.DataFrame) -> float | None:
+        frame = frame.loc[horizons]
+        total = frame["n_uji"].sum()
+        return float((frame["PICP_%"] * frame["n_uji"]).sum() / total / 100.0) if total else None
+
+    return per_h, (weighted(p80), weighted(p95))

@@ -314,7 +314,7 @@ const pages = {
             <div class="fact-item"><dt>Kapasitas layanan</dt><dd>${fmt(ambang)} ribu</dd></div>
             <div class="fact-item"><dt>Status awal</dt><dd>${badge(f1 ? rr(f1).s : null)}</dd></div>
           </dl>
-          <p style="font-size:12px;color:var(--mut);margin:14px 0 0;line-height:1.5">Asisten AI hanya menjawab berdasarkan fakta data numerik yang telah divalidasi tanpa rekayasa angka (Zero Hallucination).</p>
+          <p style="font-size:12px;color:var(--mut);margin:14px 0 0;line-height:1.5">Setiap angka pada jawaban berasal dari data dan perhitungan sistem. Jawaban bebas dari model bahasa hanya ditampilkan bila seluruh angkanya cocok dengan fakta di atas; jika tidak, sistem memakai jawaban berbasis aturan. Prakiraan tetap bisa meleset; gunakan sebagai arahan perencanaan.</p>
         </div>
 
         <div class="card">
@@ -322,113 +322,21 @@ const pages = {
           <ul class="ins" style="font-size:12.5px;color:#475569">
             <li>Tanyakan perbandingan bulan tertentu: <em>"Berapa prediksi bulan Desember?"</em></li>
             <li>Tanyakan alasan lonjakan: <em>"Kenapa skenario padat 95% berstatus kritis?"</em></li>
-            <li>Tanyakan skenario: <em>"Bagaimana jika kapasitas dinaikkan 10%?"</em></li>
+            <li>Tanyakan skenario: <em>"Bagaimana jika kapasitas dinaikkan 10%?"</em> atau <em>"kapasitas 36 juta"</em></li>
           </ul>
         </div>
       </div>
     </div>`;
 
-    // Knowledge & Response Generator
-    const getAIAnswer = (query) => {
-      const q = query.toLowerCase();
-      const f_first = F[0], f_end = F[F.length - 1];
-      const maxPt = F.reduce((m, r) => r.titik > m.titik ? r : m, F[0]);
-      const minPt = F.reduce((m, r) => r.titik < m.titik ? r : m, F[0]);
-      const worstRisk = F.reduce((w, r) => { const k = rr(r); return (k.p || 0) > (w.p || 0) ? { ...k, ...r } : w; }, { p: 0 });
-      const kritisMonths = F.filter((r) => rr(r).s === 'kritis');
-      const waspadaMonths = F.filter((r) => rr(r).s === 'waspada');
-
-      // 1. Ringkasan Proyeksi 6 Bulan
-      if (q.includes('ringkas') || q.includes('proyeksi') || q.includes('rangkum') || q.includes('overview') || q.includes('summary')) {
-        return `<p>Berikut adalah <strong>Ringkasan Eksekutif Proyeksi Penumpang KRL Jabodetabek (6 Bulan ke Depan)</strong>:</p>
-        <ul>
-          <li><strong>Cakupan Periode:</strong> ${bln(f_first.bulan)} hingga ${bln(f_end.bulan)}.</li>
-          <li><strong>Rentang Estimasi Titik:</strong> Volume bulanan diproyeksikan berada di kisaran <strong>${fmt(minPt.titik)} ribu</strong> (${bln(minPt.bulan)}) hingga <strong>${fmt(maxPt.titik)} ribu</strong> (${bln(maxPt.bulan)}).</li>
-          <li><strong>Puncak Permintaan:</strong> Terjadi pada <strong>${bln(maxPt.bulan)}</strong> dengan estimasi titik <strong>${fmt(maxPt.titik)} ribu</strong> penumpang (didorong mobilitas libur akhir tahun & cuti bersama).</li>
-          <li><strong>Skenario padat (95%):</strong> Risiko volume tertinggi mencapai <strong>${fmt(worstRisk.u95)} ribu</strong> pada <strong>${bln(worstRisk.bulan)}</strong>.</li>
-          <li><strong>Kesimpulan Dinamika:</strong> Tren pasca-COVID stabil di level rata-rata 30–32 juta/bulan, mengindikasikan bahwa laju pertumbuhan mulai tertahan oleh batas fisik daya tampung rangkaian (*capacity ceiling*).</li>
-        </ul>`;
-      }
-
-      // 2. Risiko Kapasitas & Status Kritis
-      if (q.includes('risiko') || q.includes('kapasitas') || q.includes('ambang') || q.includes('kritis') || q.includes('waspada') || q.includes('aman') || q.includes('overload')) {
-        return `<p>Berikut adalah <strong>Analisis Risiko Kapasitas Sistem KRL</strong>:</p>
-        <ul>
-          <li><strong>Kapasitas layanan:</strong> Ditetapkan pada <strong>${fmt(ambang)} ribu penumpang/bulan</strong> (representasi daya angkut maksimal armada saat ini).</li>
-          <li><strong>Status Risiko Tertinggi:</strong> Terdeteksi berstatus <span class="badge ${worstRisk.s}">${worstRisk.s.toUpperCase()}</span> pada <strong>${bln(worstRisk.bulan)}</strong> dengan tingkat keterisian skenario padat setara <strong>${pf.format(worstRisk.p)}%</strong> dari kapasitas layanan.</li>
-          <li><strong>Bulan Berstatus Kritis:</strong> ${kritisMonths.length ? kritisMonths.map((m) => `<strong>${bln(m.bulan)}</strong> (${fmt(m.u95)} ribu)`).join(', ') : 'Tidak ada bulan yang melampaui kapasitas layanan.'}</li>
-          <li><strong>Bulan Berstatus Waspada:</strong> ${waspadaMonths.length ? waspadaMonths.map((m) => `<strong>${bln(m.bulan)}</strong> (${fmt(m.u95)} ribu)`).join(', ') : 'Nihil.'}</li>
-        </ul>
-        <p>⚠️ <em>Catatan Penting:</em> Status KRITIS ditentukan oleh <strong>Skenario padat (95%)</strong> (kemungkinan terburuk), bukan perkiraan utama. Tujuannya adalah prinsip kehati-hatian (*safety margin*) agar operator tidak mengalami *service breakdown* saat lonjakan tak terduga.</p>`;
-      }
-
-      // 3. Rekomendasi Kebijakan Armada
-      if (q.includes('rekomendasi') || q.includes('kebijakan') || q.includes('solusi') || q.includes('saran') || q.includes('mitigasi') || q.includes('armada') || q.includes('kai')) {
-        return `<p>Berdasarkan hasil pemodelan cerdas dan proyeksi risiko kapasitas, berikut adalah <strong>4 Rekomendasi Kebijakan untuk Operator PT KAI Commuter & DJKA Kemenhub</strong>:</p>
-        <ul>
-          <li><strong>1. Optimalisasi Formasi Rangkaian (SF12):</strong> Prioritaskan pengoperasian rangkaian 12 kereta (*Stamformasi 12*) secara penuh pada koridor terpadat (Bogor–Manggarai dan Cikarang–Manggarai), khususnya di jam sibuk pagi (06.30–08.30) dan sore (17.00–19.30).</li>
-          <li><strong>2. Rekayasa Crowd Control di Stasiun Transit:</strong> Terapkan manajemen alur pergantian penumpang secara ketat di Stasiun Manggarai (lantai 1 ke lantai 2) dan Tanah Abang guna mencegah desak-desakan ekstrem pada peron saat headway rapat.</li>
-          <li><strong>3. Penyesuaian Headway Dinamis:</strong> Memperpendek interval antar-kereta (*headway*) menjadi 3–4 menit pada bulan-bulan berstatus <em>Kritis/Waspada</em> (seperti ${bln(worstRisk.bulan)}).</li>
-          <li><strong>4. Penyiagaan Kereta Luar Biasa (KLB Cadangan):</strong> Siapkan minimal 2–3 rangkaian cadangan di depo Bukit Duri dan Manggarai yang siap diinjeksi saat terjadi penumpukan mendadak.</li>
-        </ul>`;
-      }
-
-      // 4. Pola Musiman, Lebaran, Hari Kerja & COVID
-      if (q.includes('musim') || q.includes('lebaran') || q.includes('idul fitri') || q.includes('libur') || q.includes('hari kerja') || q.includes('covid') || q.includes('pandemi')) {
-        return `<p>Berikut adalah karakteristik <strong>Dinamika Musiman & Efek Eksternal Penumpang KRL</strong>:</p>
-        <ul>
-          <li><strong>Fenomena Anjlok Lebaran:</strong> Setiap periode Idul Fitri (seperti ${D.meta.lebaran?.slice(-3).map((m) => bln(m)).join(', ')}), jumlah penumpang KRL selalu merosot tajam antara <strong>15% hingga 25%</strong> akibat libur panjang kantor/sekolah dan tradisi mudik ke luar Jabodetabek.</li>
-          <li><strong>Efek Rebound Pasca-Lebaran:</strong> Satu bulan setelah Lebaran, mobilitas komuter melonjak kembali secara signifikan karena arus balik pekerja urban.</li>
-          <li><strong>Sensitivitas Hari Kerja:</strong> Terdapat korelasi positif yang sangat kuat ($r > 0.85$) antara jumlah hari kerja (Senin–Jumat non-libur) dengan total penumpang bulanan. Selisih 1–2 hari kerja dapat menggeser volume hingga ratusan ribu orang.</li>
-          <li><strong>Structural Break Pandemi:</strong> Periode Maret 2020 s.d. Desember 2021 merupakan patahan struktural ekstrem saat penumpang anjlok hingga 60%. Sejak 2023, mobilitas telah pulih penuh dan memasuki fase jenuh kapasitas.</li>
-        </ul>`;
-      }
-
-      // 5. Penjelasan Ketidakpastian & Prediction Interval
-      if (q.includes('interval') || q.includes('ketidakpastian') || q.includes('uncertainty') || q.includes('80%') || q.includes('95%') || q.includes('conformal') || q.includes('cqr') || q.includes('metode')) {
-        return `<p>Berikut penjelasan tentang <strong>Skenario Cukup Padat dan Skenario Padat</strong>:</p>
-        <ul>
-          <li><strong>Kelemahan satu angka:</strong> Meramal dengan 1 angka tunggal berbahaya. Jika realisasi penumpang berada di atas estimasi, stasiun lumpuh karena penumpukan; jika di bawahnya, terjadi pemborosan energi listrik dan armada.</li>
-          <li><strong>Skenario cukup padat (80%):</strong> Menunjukkan rentang realistis operasional reguler (80% kemungkinan aktual berada di dalam rentang tersebut).</li>
-          <li><strong>Skenario padat (95%):</strong> Menunjukkan kemungkinan terburuk sebagai jaring pengaman (*safety net*) mitigasi risiko darurat. Perkiraan masih bisa meleset cukup jauh; gunakan sebagai arahan perencanaan, bukan angka pasti.</li>
-          <li><strong>Metode kalibrasi:</strong> Dikalibrasi secara empiris dari residual *out-of-sample* backtest historis tanpa memaksakan asumsi distribusi normal Gaussian yang sering meleset pada data nyata.</li>
-        </ul>`;
-      }
-
-      // 6. Pertanyaan Bulan Tertentu (misal September, Oktober, Desember)
-      const monthNames = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
-      const matchedIdx = monthNames.findIndex((mn) => q.includes(mn));
-      if (matchedIdx >= 0) {
-        const found = F.find((r) => +r.bulan.split('-')[1] === matchedIdx + 1);
-        if (found) {
-          const rk = rr(found);
-          return `<p>Detail Proyeksi untuk <strong>${bln(found.bulan)}</strong>:</p>
-          <ul>
-            <li><strong>Perkiraan jumlah penumpang:</strong> <span class="stat-highlight">${fmt(found.titik)} ribu penumpang</span></li>
-            <li><strong>Skenario cukup padat (80%):</strong> ${fmt(found.l80)} s.d. ${fmt(found.u80)} ribu penumpang</li>
-            <li><strong>Skenario padat (95%):</strong> ${fmt(found.l95)} s.d. ${fmt(found.u95)} ribu penumpang</li>
-            <li><strong>Batas atas skenario padat (95%):</strong> ${fmt(found.u95)} ribu penumpang</li>
-            <li><strong>Tingkat keterisian terhadap kapasitas:</strong> ${rk.p != null ? pf.format(rk.p) + '%' : '--'} (Kapasitas layanan: ${fmt(ambang)} ribu)</li>
-            <li><strong>Status Risiko:</strong> ${badge(rk.s)}</li>
-          </ul>`;
-        }
-      }
-
-      // 7. Respon Cerdas Umum
-      return `<p>Terima kasih atas pertanyaannya! Berdasarkan basis data cerdas KRL Jabodetabek:</p>
-      <ul>
-        <li>Posisi data aktual terakhir (<strong>${bln(lastH.bulan)}</strong>) mencatatkan volume <strong>${fmt(lastH.nilai)} ribu</strong> penumpang.</li>
-        <li>Proyeksi bulan terdekat (<strong>${bln(f_first.bulan)}</strong>) adalah <strong>${fmt(f_first.titik)} ribu</strong> dengan skenario padat (95%) mencapai <strong>${fmt(f_first.u95)} ribu</strong>.</li>
-        <li>Kondisi ini menempatkan status operasional pada level ${badge(rr(f_first).s)}.</li>
-      </ul>
-      <p>Anda dapat mengklik tombol topik cepat di atas untuk melihat <em>Ringkasan Proyeksi 6 Bulan</em>, <em>Analisis Risiko Kapasitas</em>, atau <em>Rekomendasi Kebijakan Armada</em> secara mendalam.</p>`;
-    };
-
-    // Chat Controller
+    // Controller chat: memanggil backend (/api/v1/chat). Semua teks di-escape oleh KRLChat (tanpa innerHTML mentah).
+    // Bila server tidak terjangkau (mis. dibuka lewat server statis/Flask) atau mode demo: jawaban offline
+    // yang diturunkan dari data.json, tanpa angka atau saran tulisan tangan.
     const stream = document.getElementById('chat-stream');
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('chat-send-btn');
     const resetBtn = document.getElementById('btn-reset-chat');
+    const history = [];
+    let busy = false;
 
     const appendMsg = (role, html) => {
       const row = document.createElement('div');
@@ -452,25 +360,35 @@ const pages = {
       if (el) el.remove();
     };
 
-    const handleSend = (text) => {
+    const handleSend = async (text) => {
       const query = (text || input.value || '').trim();
-      if (!query) return;
-      input.value = '';
-      appendMsg('user', `<p>${query}</p>`);
+      if (!query || busy) return;
+      busy = true; sendBtn.disabled = true; input.value = '';
+      appendMsg('user', `<p>${KRLChat.escapeHtml(query)}</p>`);
       showTyping();
-      setTimeout(() => {
-        removeTyping();
-        const ans = getAIAnswer(query);
-        appendMsg('ai', ans);
-      }, 350);
+      let data;
+      try {
+        if (DEMO_FLAG()) throw new KRLChat.ChatError('network', 'mode demo');
+        data = await KRLChat.askChat({ message: query, history, ambang });
+      } catch (err) {
+        const friendly = KRLChat.errorMessage(err);
+        data = friendly
+          ? { answer: friendly, bullets: [], status: null, source: 'rules', suggestions: [] }
+          : KRLChat.offlineAnswer(D, query, KRLInsight.buildInsight);
+      }
+      removeTyping();
+      appendMsg('ai', KRLChat.renderAnswer(data));
+      history.push({ role: 'user', content: query }, { role: 'assistant', content: data.answer });
+      history.splice(0, Math.max(0, history.length - 6));
+      busy = false; sendBtn.disabled = false; input.focus();
     };
 
-    // Initial greeting
     const loadGreeting = () => {
       stream.innerHTML = '';
+      history.length = 0;
       appendMsg('ai', `<p>Halo! Saya <strong>Asisten AI KRL Insight</strong>. 🚆</p>
-      <p>Saya dilatih untuk menganalisis data deret waktu penumpang KRL Jabodetabek, mengevaluasi rentang ketidakpastian peramalan 6 bulan ke depan, dan mendeteksi risiko kejenuhan kapasitas armada.</p>
-      <p>Silakan tanyakan hal apa saja atau gunakan tombol topik cepat di atas untuk memulai!</p>`);
+      <p>Saya menjawab seputar prakiraan penumpang KRL Jabodetabek 6 bulan ke depan, risiko kapasitas, skenario perubahan kapasitas, dan pola musiman. Jawaban dihitung dari data dan model yang sama dengan dashboard.</p>
+      <p>Pilih topik cepat di atas atau ketik pertanyaan Anda.</p>`);
     };
 
     loadGreeting();
@@ -478,9 +396,10 @@ const pages = {
     sendBtn.onclick = () => handleSend();
     input.onkeydown = (e) => { if (e.key === 'Enter') handleSend(); };
     resetBtn.onclick = () => loadGreeting();
-
-    document.querySelectorAll('.chip-btn').forEach((btn) => {
-      btn.onclick = () => handleSend(btn.dataset.q);
+    document.querySelectorAll('.chat-chips .chip-btn').forEach((btn) => { btn.onclick = () => handleSend(btn.dataset.q); });
+    stream.addEventListener('click', (e) => {
+      const b = e.target.closest('.chip-btn');
+      if (b && b.dataset.q) handleSend(b.dataset.q);
     });
   }
 };

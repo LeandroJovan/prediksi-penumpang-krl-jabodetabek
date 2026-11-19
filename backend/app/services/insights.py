@@ -378,14 +378,33 @@ def fallback(facts: dict) -> InsightData:
     )
 
 
+_NUMBER_RE = r"\d+(?:[.,]\d+)*"
+
+
 def _number_candidates(token: str) -> set[float]:
-    candidates: set[float] = set()
-    for cleaned in {token.replace(".", "").replace(",", "."), token.replace(",", "")}:
-        try:
-            candidates.add(float(cleaned))
-        except ValueError:
-            pass
-    return candidates
+    """Tafsir angka yang MUNGKIN dimaksud penulis. Dibuat sesempit mungkin: tafsir ganda ('99.999' sebagai
+    99999 sekaligus 99,999) membuat angka karangan lolos karena kebetulan dekat dengan angka lain."""
+    try:
+        if re.fullmatch(r"\d+", token):
+            return {float(token)}
+        if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", token):  # 37.900 / 1.234.567 : ribuan gaya Indonesia
+            return {float(token.replace(".", ""))}
+        if re.fullmatch(r"\d{1,3}(?:,\d{3})+", token):  # 37,900: ribuan gaya Inggris ATAU desimal Indonesia
+            out = {float(token.replace(",", ""))}
+            if token.count(",") == 1:
+                out.add(float(token.replace(",", ".")))
+            return out
+        if "." in token and "," in token:  # 1.234,5 (Indonesia) atau 1,234.5 (Inggris)
+            if token.rfind(",") > token.rfind("."):
+                return {float(token.replace(".", "").replace(",", "."))}
+            return {float(token.replace(",", ""))}
+        if re.fullmatch(r"\d+\.\d+", token):  # 37.9 : desimal
+            return {float(token)}
+        if re.fullmatch(r"\d+,\d+", token):  # 37,9 : desimal Indonesia
+            return {float(token.replace(",", "."))}
+    except ValueError:
+        pass
+    return set()
 
 
 def _collect_numbers(value, out: set[float]) -> None:
@@ -401,28 +420,33 @@ def _collect_numbers(value, out: set[float]) -> None:
         number = float(value)
         out.update([number, number / 1000.0, number * 100.0])
     elif isinstance(value, str):
-        for token in re.findall(r"\d+(?:[.,]\d+)?", value):
+        for token in re.findall(_NUMBER_RE, value):
             out.update(_number_candidates(token))
 
 
-def _validate_numbers(data: InsightData, facts: dict) -> None:
+def assert_numbers_grounded(texts: list[str], facts: dict) -> None:
+    """Setiap angka di ``texts`` harus ada di ``facts`` (atau 80/90/95/100). Melempar ValueError jika tidak."""
     allowed: set[float] = set()
     _collect_numbers(facts, allowed)
     allowed.update({80.0, 95.0, 90.0, 100.0})
+    for text in texts:
+        if not text:
+            continue
+        for token in re.findall(_NUMBER_RE, text):
+            candidates = _number_candidates(token)
+            if not any(abs(candidate - allowed_value) <= 0.05
+                       for candidate in candidates for allowed_value in allowed):
+                raise ValueError(f"Ungrounded number in insight: {token}")
+
+
+def _validate_numbers(data: InsightData, facts: dict) -> None:
     texts = [data.conclusion, data.headline, data.summary]
     texts.extend(point.text for point in data.points)
     texts.extend(data.actions)
     texts.extend(item.rationale for item in data.recommendations)
     texts.extend(data.limitations)
     texts.append(json.dumps(data.technical_details, ensure_ascii=False))
-    for text in texts:
-        if not text:
-            continue
-        for token in re.findall(r"\d+(?:[.,]\d+)?", text):
-            candidates = _number_candidates(token)
-            if not any(abs(candidate - allowed_value) <= 0.05
-                       for candidate in candidates for allowed_value in allowed):
-                raise ValueError(f"Ungrounded number in insight: {token}")
+    assert_numbers_grounded(texts, facts)
 
 
 class InsightService:
