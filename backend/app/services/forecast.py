@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import REPO_ROOT, Settings
 from backend.app.core.errors import AppError
 from backend.app.core.forecast_csv import ForecastCsvError, read_forecast_csv
+from backend.app.core.pipeline_data import data_bounds
 from backend.app.db.models import Actual, Calendar, ModelRun
 from backend.app.ml.loader import load_bundle
 from backend.app.ml.validation import validate_forecast
@@ -100,7 +101,7 @@ class ForecastService:
             meta={
                 "model_run_id": run_id,
                 "algorithm": model_run.algorithm if model_run else "LightGBM + Conformal CQR",
-                "data_through": model_run.data_end.isoformat() if model_run else "2026-08-01",
+                "data_through": self._data_through(model_run),
                 "cached": False,
                 "unit": manifest_unit,
                 "available_horizons": list(range(1, horizon_max + 1)),
@@ -113,6 +114,13 @@ class ForecastService:
             await self.redis.set(cache_key, response.model_dump_json(), ex=self.settings.forecast_cache_ttl_seconds)
 
         return response
+
+    @staticmethod
+    def _data_through(model_run: ModelRun | None) -> str | None:
+        if model_run:
+            return model_run.data_end.isoformat()
+        last = data_bounds()[1]
+        return last.isoformat() if last else None
 
     async def _active_model_or_default(self) -> ModelRun | None:
         try:
@@ -187,8 +195,7 @@ class ForecastService:
         items = []
         for row in df.itertuples(index=False):
             h = int(row.horizon)
-            # 6 bulan ke depan mulai 2026-09-01
-            period = (pd.Timestamp("2026-08-01") + pd.DateOffset(months=h)).date()
+            period = row.period_target
             cal_dict = calendar_by_period.get(period, {"total_hari": 30, "jumlah_hari_kerja": 21})
 
             val_80_lo = float(row.batas_bawah_80)

@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session
+from backend.app.core.pipeline_data import data_bounds
 from backend.app.db.models import ModelRun
 
 router = APIRouter(prefix="/models", tags=["models"])
@@ -12,7 +13,7 @@ DEFAULT_MODELS = [
         "run_id": "lgbm_cqr_v1",
         "algorithm": "LightGBM + CQR",
         "model_version": "1.0.0",
-        "data_through": "2026-08-01",
+        "data_through": None,  # diisi dari data aktual terbaru saat dilayani (_default_models)
         "horizon_max": 6,
         "is_active": True,
         "description": "Multi-Horizon LightGBM dengan Conformalized Quantile Regression (CQR)",
@@ -21,7 +22,7 @@ DEFAULT_MODELS = [
         "run_id": "sarimax_v1",
         "algorithm": "SARIMAX (Exogenous Calendar)",
         "model_version": "1.0.0",
-        "data_through": "2026-08-01",
+        "data_through": None,  # diisi dari data aktual terbaru saat dilayani (_default_models)
         "horizon_max": 6,
         "is_active": False,
         "description": "SARIMAX(1,1,1)x(1,1,1,12) dengan fitur kalender hari kerja & Lebaran",
@@ -30,12 +31,19 @@ DEFAULT_MODELS = [
         "run_id": "ets_v1",
         "algorithm": "ETS (Holt-Winters)",
         "model_version": "1.0.0",
-        "data_through": "2026-08-01",
+        "data_through": None,  # diisi dari data aktual terbaru saat dilayani (_default_models)
         "horizon_max": 6,
         "is_active": False,
         "description": "Exponential Smoothing Holt-Winters Musiman Additive",
     },
 ]
+
+
+def _default_models() -> list[dict]:
+    """Salinan DEFAULT_MODELS dengan data_through dari data aktual terbaru."""
+    last = data_bounds()[1]
+    through = last.isoformat() if last else None
+    return [{**model, "data_through": through} for model in DEFAULT_MODELS]
 
 
 @router.get("")
@@ -60,7 +68,7 @@ async def list_models(session: AsyncSession = Depends(db_session)) -> dict:
     except Exception:
         pass
 
-    return {"data": DEFAULT_MODELS}
+    return {"data": _default_models()}
 
 
 @router.get("/{run_id}")
@@ -81,7 +89,7 @@ async def model_detail(run_id: str, session: AsyncSession = Depends(db_session))
     except Exception:
         pass
 
-    for m in DEFAULT_MODELS:
+    for m in _default_models():
         if m["run_id"] == run_id:
             return {"data": m}
 

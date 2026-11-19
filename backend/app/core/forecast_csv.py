@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from backend.app.core.pipeline_data import target_periods
+
 CANONICAL_COLUMNS = [
     "horizon",
     "y_pred_titik",
@@ -30,13 +32,19 @@ class ForecastCsvError(ValueError):
     """CSV prakiraan tidak sesuai kontrak kolom."""
 
 
-def normalize_forecast_frame(df: pd.DataFrame) -> pd.DataFrame:
+def normalize_forecast_frame(df: pd.DataFrame, with_period: bool = True) -> pd.DataFrame:
     df = df.rename(columns=COLUMN_ALIASES)
     missing = [c for c in CANONICAL_COLUMNS if c not in df.columns]
     if missing:
         raise ForecastCsvError(f"Kolom prakiraan tidak ditemukan: {', '.join(missing)}")
+    if with_period:
+        try:
+            df = df.assign(period_target=target_periods(df))
+        except ValueError as exc:
+            raise ForecastCsvError(str(exc)) from exc
     return df
 
 
-def read_forecast_csv(path: Path) -> pd.DataFrame:
-    return normalize_forecast_frame(pd.read_csv(path))
+def read_forecast_csv(path: Path, with_period: bool = True) -> pd.DataFrame:
+    """with_period=True menambah kolom ``period_target`` (date) untuk tiap horizon."""
+    return normalize_forecast_frame(pd.read_csv(path), with_period=with_period)

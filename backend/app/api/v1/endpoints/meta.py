@@ -60,8 +60,8 @@ async def metadata(
 
     return {
         "data": {
-            "data_start": start_date or "2016-01-01",
-            "data_through": end_date or "2026-08-01",
+            "data_start": start_date,
+            "data_through": end_date,
             "observation_count": obs_count,
             "active_model": active_model,
             "krl_capacity_monthly_ribu": app_settings.krl_capacity_monthly_ribu,

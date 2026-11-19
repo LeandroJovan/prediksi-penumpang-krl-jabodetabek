@@ -11,6 +11,7 @@ import logging
 import math
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -157,7 +158,7 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
         df_fc = read_forecast_csv(fc_file)
         for r in df_fc.itertuples():
             h = int(r.horizon)
-            bln = (pd.Timestamp("2026-08-01") + pd.DateOffset(months=h)).strftime("%Y-%m")
+            bln = r.period_target.strftime("%Y-%m")
             fc_list.append({
                 "bulan": bln,
                 "horizon": h,
@@ -197,7 +198,7 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
             "sumber": "BPS & KAI Commuter (Pipeline ML Cerdas)",
             "satuan": "ribu penumpang",
             "periode_data": periode_label,
-            "diperbarui": "2026-11-04",
+            "diperbarui": _output_updated(fc_file),
             "model_terpilih": "LightGBM + Conformal CQR",
             "lebaran": ["2017-06", "2018-06", "2019-06", "2022-05", "2023-04", "2024-04", "2025-03", "2026-03"],
         },
@@ -212,6 +213,13 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
             "pasca_covid": eval_pasca_covid,
         },
     }
+
+
+def _output_updated(path: Path) -> str | None:
+    """Tanggal pembaruan = waktu modifikasi output pipeline (bukan tanggal hardcoded)."""
+    if not path.exists():
+        return None
+    return datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d")
 
 
 def sync_data_json():
@@ -258,7 +266,7 @@ def get_forecast():
     if not path_file.exists():
         return jsonify({"error": "Data prakiraan belum di-generate"}), 404
 
-    df = read_forecast_csv(path_file)
+    df = read_forecast_csv(path_file, with_period=False)
     ambang = _capacity(request.args)
     waspada = _waspada(request.args)
     basis_interval = request.args.get("basis_interval", "95")
@@ -306,7 +314,7 @@ def simulate_risk():
     if not path_file.exists():
         return jsonify({"error": "Data prakiraan tidak ditemukan"}), 404
 
-    df = read_forecast_csv(path_file)
+    df = read_forecast_csv(path_file, with_period=False)
     df_hasil = rsk.klasifikasi_tabel_risiko(
         df,
         ambang_kapasitas=ambang,
@@ -369,7 +377,7 @@ def get_sensitivity():
     if not path_file.exists():
         fc_path = FOLDER_OUTPUT / "prediksi_future_6bln.csv"
         if fc_path.exists():
-            df_fc = read_forecast_csv(fc_path)
+            df_fc = read_forecast_csv(fc_path, with_period=False)
             df_sens = rsk.analisis_sensitivitas(df_fc)
             return jsonify(df_sens.to_dict(orient="records"))
         return jsonify({"error": "Data analisis sensitivitas belum tersedia"}), 404

@@ -8,6 +8,7 @@ import pandas as pd
 from sqlalchemy import delete, select
 
 from backend.app.core.config import REPO_ROOT
+from backend.app.core.pipeline_data import DATA_FINAL, data_bounds
 from backend.app.db.base import Base
 from backend.app.db.models import Actual, Calendar, Metric, ModelRun
 from backend.app.db.session import SessionLocal, engine
@@ -97,6 +98,9 @@ async def seed_all(session=None) -> None:
                 sess.add_all(new_cals)
 
         # 3. Seed ModelRun (LightGBM CQR & SARIMAX)
+        data_start, data_end = data_bounds(ROOT)
+        if data_start is None or data_end is None:
+            raise RuntimeError(f"{ROOT / DATA_FINAL} tidak ditemukan/kosong; tidak dapat menentukan rentang data model.")
         existing_runs = set((await sess.execute(select(ModelRun.run_id))).scalars().all())
 
         lgbm_run_id = "lgbm_cqr_v1"
@@ -108,8 +112,8 @@ async def seed_all(session=None) -> None:
                 algorithm="LightGBM + CQR",
                 model_version="1.0.0",
                 schema_version="1.0",
-                data_start=pd.Timestamp("2016-01-01").date(),
-                data_end=pd.Timestamp("2026-08-01").date(),
+                data_start=data_start,
+                data_end=data_end,
                 horizon_max=6,
                 artifact_path="outputs/prediksi_future_6bln.csv",
                 checksum="precomputed_v1",
@@ -135,8 +139,8 @@ async def seed_all(session=None) -> None:
                 algorithm="SARIMAX (Exogenous Calendar)",
                 model_version="1.0.0",
                 schema_version="1.0",
-                data_start=pd.Timestamp("2016-01-01").date(),
-                data_end=pd.Timestamp("2026-08-01").date(),
+                data_start=data_start,
+                data_end=data_end,
                 horizon_max=6,
                 artifact_path="outputs/backtest_sarimax_dan_baseline.csv",
                 checksum="precomputed_v1",
@@ -151,6 +155,12 @@ async def seed_all(session=None) -> None:
             )
             sess.add(sarimax_run)
             await sess.flush()
+
+        # Run bawaan seed (precomputed) mengikuti rentang data aktual terbaru.
+        for run in (
+            await sess.execute(select(ModelRun).where(ModelRun.checksum == "precomputed_v1"))
+        ).scalars():
+            run.data_start, run.data_end = data_start, data_end
 
         # 4. Seed Metrics
         metrics_file = ROOT / "outputs/metrik_komparasi_final.csv"
