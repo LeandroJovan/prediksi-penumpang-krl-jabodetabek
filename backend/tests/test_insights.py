@@ -107,3 +107,38 @@ def test_validator_rejects_invented_numbers():
     bad = data.model_copy(update={"conclusion": "Bulan ini 123.456 penumpang."})
     with pytest.raises(ValueError):
         _validate_numbers(bad, facts)
+
+
+def test_waspada_ratio_follows_forecast_meta():
+    forecast = make_forecast(["aman"] * 6, [20000] * 6, [25000] * 6)
+    forecast.meta["batas_waspada_rasio"] = 0.8
+    assert build_fact_pack(forecast, "id")["derived"]["waspada_ratio"] == 0.8
+    del forecast.meta["batas_waspada_rasio"]
+    assert build_fact_pack(forecast, "id")["derived"]["waspada_ratio"] == 0.9
+
+
+async def test_generate_limits_concurrency_and_avoids_stampede(monkeypatch):
+    import asyncio
+
+    from backend.app.core.cache import InMemoryCache
+    from backend.app.core.config import Settings
+    from backend.app.services.insights import InsightService, fallback
+
+    service = InsightService(InMemoryCache(), Settings(ollama_max_concurrency=1))
+    state = {"calls": 0, "active": 0, "peak": 0}
+
+    async def fake_ollama(facts):
+        state["calls"] += 1
+        state["active"] += 1
+        state["peak"] = max(state["peak"], state["active"])
+        await asyncio.sleep(0.05)
+        state["active"] -= 1
+        return fallback(facts)
+
+    monkeypatch.setattr(service, "_ollama", fake_ollama)
+    forecast = make_forecast(["aman"] * 6, [20000] * 6, [25000] * 6)
+    results = await asyncio.gather(*[service.generate(forecast) for _ in range(5)])
+
+    assert state["peak"] == 1
+    assert state["calls"] == 1  # request identik berbagi satu panggilan LLM
+    assert sum(r.meta["cached"] for r in results) == 4

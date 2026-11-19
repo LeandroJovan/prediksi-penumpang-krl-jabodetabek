@@ -197,3 +197,22 @@ async def test_metrics_unknown_model_run_returns_empty_not_csv(client: AsyncClie
     res = await client.get("/api/v1/metrics?model_run_id=tidak-ada")
     assert res.status_code == 200
     assert res.json()["data"] == []
+
+
+@pytest.mark.asyncio
+async def test_ready_returns_503_without_leaking_when_dependency_down(client: AsyncClient):
+    class BrokenCache:
+        async def ping(self):
+            raise ConnectionError("redis://secret-host:6379 refused")
+
+    original = app.state.redis
+    app.state.redis = BrokenCache()
+    try:
+        res = await client.get("/api/v1/health/ready")
+    finally:
+        app.state.redis = original
+    assert res.status_code == 503
+    body = res.json()
+    assert body["status"] == "not_ready"
+    assert body["checks"] == {"database": "ok", "cache": "unavailable"}
+    assert "secret-host" not in res.text

@@ -1,7 +1,9 @@
+import asyncio
 import hashlib
 import json
 import logging
 import re
+import weakref
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -13,6 +15,19 @@ from backend.app.schemas.forecast import ForecastResponse
 from backend.app.schemas.insight import InsightData, InsightPoint, InsightResponse, Recommendation
 
 logger = logging.getLogger("krl_backend.insights")
+
+# Semaphore per event loop (asyncio.Semaphore terikat ke loop tempat ia dipakai).
+_semaphores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore]" = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _llm_semaphore(limit: int) -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    sem = _semaphores.get(loop)
+    if sem is None:
+        sem = _semaphores[loop] = asyncio.Semaphore(max(1, limit))
+    return sem
 
 ALLOWED_ACTIONS = [
     "monitor_capacity", "review_operational_readiness", "prepare_contingency_plan", "review_capacity_assumption",
@@ -102,7 +117,7 @@ def _summary_from_forecast(forecast: ForecastResponse) -> dict:
         "lowest_utilization": lowest.risk.utilization if lowest else None,
         "lowest_status": lowest.risk.status if lowest else "belum_ditentukan",
         "capacity_ribu": capacity,
-        "waspada_ratio": 0.9,
+        "waspada_ratio": forecast.meta.get("batas_waspada_rasio") or 0.9,
         "kritis_ratio": 1.0,
         "months": months,
     }
@@ -349,11 +364,19 @@ class InsightService:
             hit = InsightResponse.model_validate_json(cached)
             hit.meta["cached"] = True
             return hit
-        try:
-            data = await self._ollama(facts)
-        except Exception as exc:
-            logger.warning("Ollama insight gagal (%s: %s); memakai fallback", type(exc).__name__, exc)
-            data = fallback(facts)
+        # Batasi panggilan LLM paralel (OLLAMA_MAX_CONCURRENCY) dan cek ulang cache setelah antre
+        # agar request identik yang menunggu tidak memanggil Ollama berulang (cache stampede).
+        async with _llm_semaphore(self.settings.ollama_max_concurrency):
+            cached = await self.redis.get(key)
+            if cached:
+                hit = InsightResponse.model_validate_json(cached)
+                hit.meta["cached"] = True
+                return hit
+            try:
+                data = await self._ollama(facts)
+            except Exception as exc:
+                logger.warning("Ollama insight gagal (%s: %s); memakai fallback", type(exc).__name__, exc)
+                data = fallback(facts)
         response = InsightResponse(data=data, meta={"language": language, "cached": False, "model": self.settings.ollama_model,
                                                      "prompt_version": self.settings.ai_insight_prompt_version,
                                                      "forecast_model_run_id": forecast.meta.get("model_run_id")})

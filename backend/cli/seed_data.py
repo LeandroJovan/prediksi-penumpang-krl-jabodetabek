@@ -13,6 +13,36 @@ from backend.app.db.models import Actual, Calendar, Metric, ModelRun
 from backend.app.db.session import SessionLocal, engine
 
 ROOT = REPO_ROOT
+PICP_CALIBRATION = "bergulir (sahih)"
+
+
+def load_picp(path: Path) -> tuple[dict[int, tuple[float, float]], tuple[float | None, float | None]]:
+    """Baca cakupan interval (PICP) HASIL BACKTEST dari pipeline, sebagai fraksi 0-1.
+
+    Hanya kalibrasi bergulir yang sahih; baris "in-sample (versi lama)" sengaja diabaikan karena
+    tidak jujur (100% cakupan). Return (per_horizon, keseluruhan berbobot n_uji); None jika tidak ada data.
+    """
+    empty: tuple[dict[int, tuple[float, float]], tuple[None, None]] = ({}, (None, None))
+    if not path.exists():
+        return empty
+    df = pd.read_csv(path)
+    df = df[df["kalibrasi"] == PICP_CALIBRATION]
+    by_level = {level: g.set_index("horizon") for level, g in df.groupby("level")}
+    if 80 not in by_level or 95 not in by_level:
+        return empty
+    p80, p95 = by_level[80], by_level[95]
+    horizons = sorted(set(p80.index) & set(p95.index))
+    per_h = {
+        int(h): (float(p80.loc[h, "PICP_%"]) / 100.0, float(p95.loc[h, "PICP_%"]) / 100.0)
+        for h in horizons
+    }
+
+    def weighted(frame: pd.DataFrame) -> float | None:
+        frame = frame.loc[horizons]
+        total = frame["n_uji"].sum()
+        return float((frame["PICP_%"] * frame["n_uji"]).sum() / total / 100.0) if total else None
+
+    return per_h, (weighted(p80), weighted(p95))
 
 
 async def seed_all(session=None) -> None:
@@ -126,6 +156,7 @@ async def seed_all(session=None) -> None:
         metrics_file = ROOT / "outputs/metrik_komparasi_final.csv"
         metrics_per_h_file = ROOT / "outputs/metrik_per_horizon_final.csv"
 
+        picp_by_h, picp_overall = load_picp(ROOT / "outputs/metrik_interval_conformal.csv")
         existing_metrics_count = (await sess.execute(select(Metric))).scalars().first()
         if existing_metrics_count is None and lgbm_run is not None:
             new_metrics = []
@@ -143,8 +174,8 @@ async def seed_all(session=None) -> None:
                             mae=float(row.MAE),
                             rmse=float(row.RMSE),
                             mase=float(row.MASE),
-                            picp80=0.84,
-                            picp95=1.00,
+                            picp80=picp_overall[0],
+                            picp95=picp_overall[1],
                         )
                     )
             if metrics_per_h_file.exists():
@@ -161,12 +192,22 @@ async def seed_all(session=None) -> None:
                             mae=float(row.MAE),
                             rmse=float(row.RMSE),
                             mase=float(row.MASE),
-                            picp80=0.84,
-                            picp95=1.00,
+                            picp80=picp_by_h.get(int(row.horizon), (None, None))[0],
+                            picp95=picp_by_h.get(int(row.horizon), (None, None))[1],
                         )
                     )
             if new_metrics:
                 sess.add_all(new_metrics)
+        elif lgbm_run is not None:
+            # DB lama mungkin masih berisi PICP in-sample lama (0.84/1.00); koreksi secara idempoten.
+            existing = (
+                await sess.execute(select(Metric).where(Metric.model_run_id == lgbm_run.id))
+            ).scalars().all()
+            for metric in existing:
+                if metric.horizon is None:
+                    metric.picp80, metric.picp95 = picp_overall
+                else:
+                    metric.picp80, metric.picp95 = picp_by_h.get(metric.horizon, (None, None))
 
         await sess.commit()
     finally:
