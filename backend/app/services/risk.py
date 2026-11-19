@@ -1,4 +1,4 @@
-from datetime import date
+import math
 
 from backend.app.core.config import Settings
 from backend.app.schemas.forecast import RiskResult
@@ -29,7 +29,13 @@ def calculate_risk(
         non_workdays = calendar.get("total_hari", 30) - calendar.get("jumlah_hari_kerja", 20)
         capacity = weekday * calendar.get("jumlah_hari_kerja", 20) + weekend * non_workdays
 
-    utilization = upper_val / capacity if capacity > 0 else 0.0
+    # Kapasitas tidak valid tidak boleh dianggap "aman" (fail-safe).
+    if not math.isfinite(capacity) or capacity <= 0:
+        return RiskResult(status="belum_ditentukan", reason="invalid_capacity")
+    if not math.isfinite(upper_val) or not 0 < waspada_ratio < 1:
+        return RiskResult(status="belum_ditentukan", reason="invalid_input")
+
+    utilization = upper_val / capacity
     if utilization >= 1.0:
         status = "kritis"
     elif utilization >= waspada_ratio:

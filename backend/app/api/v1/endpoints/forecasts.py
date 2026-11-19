@@ -12,8 +12,14 @@ router = APIRouter(prefix="/forecasts", tags=["forecasts"])
 @router.get("/latest", response_model=ForecastResponse)
 async def latest_forecast(
     horizon: list[int] | None = Query(default=None, description="Filter horizon bulan (1-6)"),
-    ambang_kapasitas: float | None = Query(default=None, description="Ambang kapasitas bulanan dalam ribu orang"),
-    batas_waspada: float | None = Query(default=None, description="Rasio batas waspada (default 0.90)"),
+    ambang_kapasitas: float | None = Query(
+        default=None, gt=0, le=1_000_000, allow_inf_nan=False,
+        description="Ambang kapasitas bulanan dalam ribu orang",
+    ),
+    batas_waspada: float | None = Query(
+        default=None, gt=0, lt=1, allow_inf_nan=False,
+        description="Rasio batas waspada (default 0.90)",
+    ),
     basis_interval: str = Query(default="95", pattern="^(80|95)$", description="Basis interval ketidakpastian"),
     session: AsyncSession = Depends(db_session),
     app_settings: Settings = Depends(settings),

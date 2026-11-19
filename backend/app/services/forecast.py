@@ -36,7 +36,16 @@ class ForecastService:
             raise AppError("HORIZON_NOT_AVAILABLE", 422, "Requested horizon is not available.")
 
         run_id = model_run.run_id if model_run else "precomputed_lgbm_cqr"
-        cap_monthly = capacity_monthly if capacity_monthly is not None else self.settings.krl_capacity_monthly_ribu
+        if capacity_monthly is not None:
+            cap_monthly = capacity_monthly
+        elif (
+            self.settings.krl_capacity_weekday_ribu is not None
+            and self.settings.krl_capacity_weekend_ribu is not None
+        ):
+            # Kapasitas weekday/weekend terkonfigurasi: biarkan calculate_risk menghitung per bulan.
+            cap_monthly = None
+        else:
+            cap_monthly = self.settings.krl_capacity_monthly_ribu
         ratio = waspada_ratio if waspada_ratio is not None else self.settings.krl_risk_waspada_ratio
         capacity_key = f"{cap_monthly}:{self.settings.krl_capacity_weekday_ribu}:{self.settings.krl_capacity_weekend_ribu}:{ratio}:{basis_col}"
         cache_key = f"forecast:v1:{run_id}:{','.join(map(str, sorted(requested)))}:{capacity_key}"
