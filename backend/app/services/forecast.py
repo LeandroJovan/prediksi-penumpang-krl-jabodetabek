@@ -72,6 +72,7 @@ class ForecastService:
 
         # 1. Coba inference via bundle jika model artifact tersedia
         items = None
+        source = "csv_pipeline"
         manifest_unit = "ribu_orang"
         if model_run and Path(model_run.artifact_path).is_dir():
             try:
@@ -93,6 +94,7 @@ class ForecastService:
                     waspada_ratio=ratio,
                     basis_col=basis_col,
                 )
+                source = "model"
             except Exception:
                 logger.exception(
                     "Inferensi model %s gagal; fallback ke CSV pipeline", model_run.run_id
@@ -115,6 +117,7 @@ class ForecastService:
                 "algorithm": model_run.algorithm if model_run else "LightGBM + Conformal CQR",
                 "data_through": self._data_through(model_run),
                 "cached": False,
+                "source": source,  # "model" = inferensi bundle model aktif; "csv_pipeline" = output pipeline
                 "unit": manifest_unit,
                 "available_horizons": list(range(1, horizon_max + 1)),
                 "ambang_kapasitas_aktif": cap_monthly,
