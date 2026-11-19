@@ -70,3 +70,6 @@ Thumbs.db
 
 # Scratch files
 scratch/
+
+# AI agent instructions (keep local, do not push)
+AGENTS.md

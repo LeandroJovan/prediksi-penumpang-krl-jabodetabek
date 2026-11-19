@@ -15,6 +15,11 @@ class Recommendation(BaseModel):
     fact_ids: list[str]
 
 
+class InsightPoint(BaseModel):
+    status: Literal["aman", "waspada", "kritis", "belum_ditentukan"]
+    text: str = Field(max_length=500)
+
+
 class InsightData(BaseModel):
     risk_status: Literal["aman", "waspada", "kritis", "belum_ditentukan"]
     headline: str = Field(max_length=500)
@@ -23,6 +28,10 @@ class InsightData(BaseModel):
     limitations: list[str] = Field(default_factory=list, max_length=3)
     fact_ids: list[str]
     source: Literal["ollama", "fallback"] = "ollama"
+    conclusion: str = Field(default="", max_length=500)
+    points: list[InsightPoint] = Field(default_factory=list, max_length=3)
+    actions: list[str] = Field(default_factory=list, max_length=3)
+    technical_details: dict = Field(default_factory=dict)
 
 
 class InsightResponse(BaseModel):

@@ -88,10 +88,10 @@ function forecastChart(id, fc, withHist = true, nh = 36) {
   const pt = pad(fc.map((r) => r.titik)); if (n) pt[n - 1] = H[n - 1].nilai;
   const band = (k, f, c, lbl) => ({ label: lbl, data: pad(fc.map((r) => r[k])), borderWidth: 0, pointRadius: 0, fill: f, backgroundColor: c });
   chart(id, { type: 'line', data: { labels: L, datasets: [
-    band('l95', false, 'transparent', 'Batas bawah 95%'), band('u95', '-1', 'rgba(18,48,92,.10)', 'Batas atas 95%'),
-    band('l80', false, 'transparent', 'Batas bawah 80%'), band('u80', '-1', 'rgba(18,48,92,.22)', 'Batas atas 80%'),
+    band('l95', false, 'transparent', 'Batas bawah 95%'), band('u95', '-1', 'rgba(18,48,92,.10)', 'Skenario padat (95%)'),
+    band('l80', false, 'transparent', 'Batas bawah 80%'), band('u80', '-1', 'rgba(18,48,92,.22)', 'Skenario cukup padat (80%)'),
     { label: 'Aktual', data: act, borderColor: NAVY, borderWidth: 2, pointRadius: 0, tension: .2 },
-    { label: 'Prediksi titik', data: pt, borderColor: '#2563eb', borderDash: [6, 4], borderWidth: 2, pointRadius: 3 }] },
+    { label: 'Perkiraan', data: pt, borderColor: '#2563eb', borderDash: [6, 4], borderWidth: 2, pointRadius: 3 }] },
     options: { plugins: { legend: { position: 'bottom', labels: { filter: (i) => !/Batas bawah/.test(i.text), usePointStyle: true } },
       tooltip: { callbacks: { title: (i) => bln(i[0].label), label: (c) => c.raw == null ? null : ` ${c.dataset.label}: ${fmt(c.raw)} ribu` } } },
       scales: { y: ax('ribu penumpang'), x: { ticks: { callback(v) { return bln(this.getLabelForValue(v)); }, maxTicksLimit: 8 } } } } });
@@ -187,41 +187,41 @@ const pages = {
     const dl = (x) => (x == null ? '' : `<span class="dl ${x >= 0 ? '' : 'dn'}">${x >= 0 ? '+' : ''}${pf.format(x)}%</span>`);
     const arr = (h) => `<a class="rb" href="${h}" aria-label="Buka halaman"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></svg></a>`;
     const num = (v) => (v == null ? '<span class="g">--</span>' : `${fmt(v)} <small>ribu</small>`);
-    let worst = null; F.forEach((r) => { const k = rr(r); if (k.p != null && (!worst || k.p > worst.p)) worst = { ...k, bulan: r.bulan }; });
-    const ins = [];
-    if (lastH && prev) ins.push(`Tren terbaru: ${bln(lastH.bulan)} ${chg >= 0 ? 'naik' : 'turun'} ${pf.format(Math.abs(chg))}% dibanding bulan sebelumnya.`);
-    if (lastH && f1) ins.push(`Prediksi ${bln(f1.bulan)} berbeda ${pf.format((f1.titik / lastH.nilai - 1) * 100)}% dari bulan aktual terakhir.`);
-    if (worst) ins.push(`Estimasi risiko tertinggi: ${bln(worst.bulan)} (${pf.format(worst.p)}% dari ambang).`);
-    if (f1) ins.push((f1.u95 - f1.l95) / f1.titik > 0.15 ? 'Interval prediksi relatif lebar: ketidakpastian tinggi.' : 'Interval prediksi relatif sempit.');
+    const insight = KRLInsight.buildInsight(D);
     const cal = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
     $('#view').innerHTML = head('KRL Jabodetabek|Intelligence Dashboard', 'Prediksi penumpang, ketidakpastian, dan peringatan dini kapasitas', `<span class="pill">${cal}Periode: ${D.meta.periode_data || 'menunggu data'}</span><a class="btn" href="#prediksi">+ Lihat prediksi</a>`) + `
     <div class="dg">
       <div class="card k2"><div class="ch"><div><h2>Penumpang bulan terakhir</h2><div class="sub">${lastH ? bln(lastH.bulan) : 'Menunggu data'}</div></div>${arr('#historis')}</div><div class="num">${num(lastH?.nilai)}${dl(chg)}</div></div>
       <div class="card k1"><div class="ch"><div><h2>Prediksi bulan berikutnya</h2><div class="sub">${f1 ? bln(f1.bulan) : 'Menunggu data'}</div></div>${arr('#prediksi')}</div><div class="num">${num(f1?.titik)}</div></div>
-      <div class="card k3"><div class="ch"><div><h2>Batas atas prediksi 95%</h2><div class="sub">Bukan nilai aktual</div></div>${arr('#risiko')}</div><div class="num">${num(f1?.u95)}</div></div>
+      <div class="card k3"><div class="ch"><div><h2>Skenario padat (95%)</h2><div class="sub">Kemungkinan terburuk, bukan angka pasti</div></div>${arr('#risiko')}</div><div class="num">${num(f1?.u95)}</div></div>
       <div class="card cc"><div class="ch"><div><h2>Tren historis dan prediksi</h2><div class="sub">ribu penumpang, interval 80% dan 95%</div></div><div class="hr"><div class="seg" id="win"><button data-n="12">12 bln</button><button data-n="36" class="on">36 bln</button><button data-n="9999">Semua</button></div>${arr('#prediksi')}</div></div><div class="chart">${hasF() ? '<canvas id="c1"></canvas>' : empty()}</div></div>
-      <div class="card navy st"><div class="ch"><div><h2>Status risiko kapasitas</h2><div class="sub">Berdasarkan batas atas prediksi 95%</div></div>${arr('#risiko')}</div>
-        ${badge(r1.s)}<div class="num">${r1.p != null ? pf.format(r1.p) + '%' : '--'} <small style="color:#9fb0cc">dari ambang</small></div>
+      <div class="card navy st"><div class="ch"><div><h2>Status risiko kapasitas</h2><div class="sub">Berdasarkan skenario padat (95%)</div></div>${arr('#risiko')}</div>
+        ${badge(r1.s)}<div class="num">${r1.p != null ? pf.format(r1.p) + '%' : '--'} <small style="color:#9fb0cc">dari kapasitas</small></div>
         <div class="bar"><b style="width:${Math.min(r1.p || 0, 100)}%;background:${COL[r1.s] || '#94a3b8'}"></b></div>
-        <dl><dt>Batas atas 95%</dt><dd>${fmt(f1?.u95)}</dd><dt>Ambang kapasitas</dt><dd>${fmt(ambang)}</dd></dl>
-        <p class="why">${r1.s ? `Status ${r1.s.toUpperCase()}: batas atas 95% setara ${pf.format(r1.p)}% ambang (aman &lt;90%, waspada 90–&lt;100%, kritis ≥100%).` : 'Status muncul setelah prediksi dan ambang kapasitas tersedia.'}</p></div>
-      <div class="card tb"><div class="ch"><div><h2>Prediksi dan risiko per bulan</h2><div class="sub">Enam bulan ke depan</div></div>${arr('#risiko')}</div><div class="tbl">${F.length ? '<table><tr><th>Bulan</th><th>Prediksi titik</th><th>Batas atas 95%</th><th>% ambang</th><th>Status</th></tr>' + F.map((r) => { const k = rr(r); return `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.titik)}</td><td>${fmt(r.u95)}</td><td>${k.p != null ? pf.format(k.p) + '%' : '--'}</td><td>${badge(k.s)}</td></tr>`; }).join('') + '</table>' : empty()}</div></div>
-      <div class="card ins"><div class="ch"><div><h2>Ringkasan insight</h2><div class="sub">Dari data yang tersedia</div></div></div>${ins.length ? '<ul class="ins">' + ins.map((x) => `<li>${x}</li>`).join('') + '</ul>' : empty('Insight muncul setelah data tersedia')}</div>
+        <dl><dt>Skenario padat (95%)</dt><dd>${fmt(f1?.u95)}</dd><dt>Kapasitas layanan</dt><dd>${fmt(ambang)}</dd></dl>
+        <p class="why">${r1.s ? `Status ${KRLInsight.statusLabel(r1.s)}: skenario padat setara ${pf.format(r1.p)}% dari kapasitas layanan. Artinya, jika penumpang lebih ramai dari perkiraan, kapasitas bisa terlampaui.` : 'Status muncul setelah prediksi dan kapasitas layanan tersedia.'}</p></div>
+      <div class="card tb"><div class="ch"><div><h2>Prediksi dan risiko per bulan</h2><div class="sub">Enam bulan ke depan</div></div>${arr('#risiko')}</div><div class="tbl">${F.length ? '<table><tr><th>Bulan</th><th>Perkiraan (ribu)</th><th>Skenario padat (95%) (ribu)</th><th>Tingkat keterisian</th><th>Status</th></tr>' + F.map((r) => { const k = rr(r); return `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.titik)}</td><td>${fmt(r.u95)}</td><td>${k.p != null ? pf.format(k.p) + '%' : '--'}</td><td>${badge(k.s)}</td></tr>`; }).join('') + '</table>' : empty()}</div></div>
+      <div class="card ins"><div class="ch"><div><h2>Ringkasan insight</h2><div class="sub">Dari data yang tersedia</div></div></div>
+        <p class="insight-conclusion">${insight.conclusion}</p>
+        ${insight.points.length ? '<ul class="insight-list">' + insight.points.map((p) => `<li><span class="dot ${p.status}"></span><span>${p.text}</span></li>`).join('') + '</ul>' : ''}
+        ${insight.actions.length ? `<div class="insight-actions"><h3>Saran tindakan</h3><ol>${insight.actions.map((a) => `<li>${a}</li>`).join('')}</ol></div>` : ''}
+        ${insight.technicalRows.length ? `<details class="insight-tech"><summary>Lihat detail teknis</summary><div class="tbl"><table><tr><th>Bulan</th><th>Perkiraan (ribu)</th><th>Batas bawah 95%</th><th>Batas atas 95%</th><th>Batas bawah 80%</th><th>Batas atas 80%</th><th>Tingkat keterisian</th><th>Status</th></tr>${insight.technicalRows.map((r) => `<tr><td>${r.bulan}</td><td>${r.titik}</td><td>${r.l95}</td><td>${r.u95}</td><td>${r.l80}</td><td>${r.u80}</td><td>${r.rasio}</td><td>${r.status}</td></tr>`).join('')}</table></div><p class="insight-tech-note">Metrik evaluasi model (MASE, PICP, MPIW) tersedia di laporan evaluasi teknis.</p></details>` : ''}
+      </div>
     </div>`;
     if (hasF()) { forecastChart('c1', F); $('#win').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#win button').forEach((x) => x.classList.toggle('on', x === b)); forecastChart('c1', F, true, +b.dataset.n); }; }
   },
 
   prediksi() {
-    $('#view').innerHTML = head('Prediksi Penumpang', 'Hasil forecasting 1–6 bulan ke depan dengan interval prediksi') + `
+    $('#view').innerHTML = head('Prediksi Penumpang', 'Perkiraan 1–6 bulan ke depan dengan skenario cukup padat dan skenario padat') + `
     <div class="tools"><label>Horizon <select id="hz">${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${n === 6 ? 'selected' : ''}>${n} bulan</option>`).join('')}</select></label>
     <button class="btn sec" id="dl" ${hasF() ? '' : 'disabled'}>Unduh CSV</button></div>
-    <div class="note"><b>Prediksi titik</b> adalah estimasi tunggal paling mungkin. <b>Interval prediksi</b> (80% dan 95%) adalah rentang ketidakpastian; ia bukan nilai aktual dan bukan jaminan hasil pasti berada di dalamnya.</div>
+    <div class="note"><b>Perkiraan</b> adalah angka utama yang paling mungkin. <b>Skenario cukup padat (80%)</b> dan <b>skenario padat (95%)</b> menunjukkan rentang kemungkinan; keduanya bukan angka pasti dan bukan jaminan hasil berada di dalamnya.</div>
     <div class="card" style="margin-bottom:16px"><div class="chart">${hasF() ? '<canvas id="c2"></canvas>' : empty()}</div></div>
     <div class="card"><div class="tbl" id="tb"></div></div>`;
     const draw = () => {
       const n = +$('#hz').value, F = D.forecast.slice(0, n);
       if (hasF()) forecastChart('c2', F);
-      $('#tb').innerHTML = F.length ? `<table><tr><th>Bulan</th><th>Aktual</th><th>Prediksi titik</th><th>Bawah 80%</th><th>Atas 80%</th><th>Bawah 95%</th><th>Atas 95%</th><th>Status</th></tr>` +
+      $('#tb').innerHTML = F.length ? `<table><tr><th>Bulan</th><th>Aktual</th><th>Perkiraan</th><th>Skenario cukup padat 80% (bawah)</th><th>Skenario cukup padat 80% (atas)</th><th>Skenario padat 95% (bawah)</th><th>Skenario padat 95% (atas)</th><th>Status</th></tr>` +
         F.map((r) => `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.aktual)}</td><td>${fmt(r.titik)}</td><td>${fmt(r.l80)}</td><td>${fmt(r.u80)}</td><td>${fmt(r.l95)}</td><td>${fmt(r.u95)}</td><td>${badge(rr(r).s)}</td></tr>`).join('') + '</table>' : empty();
       $('#dl').onclick = () => { const csv = 'bulan,titik,l80,u80,l95,u95\n' + F.map((r) => [r.bulan, r.titik, r.l80, r.u80, r.l95, r.u95].join(',')).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'prediksi_krl.csv'; a.click(); };
     };
@@ -256,19 +256,19 @@ const pages = {
   },
 
   risiko() {
-    $('#view').innerHTML = head('Risiko Kapasitas', 'Batas atas prediksi 95% dibandingkan ambang kapasitas') + `
-    <div class="note">Ambang kapasitas adalah <b>parameter sistem</b>, bukan kapasitas resmi. Prediksi bulanan juga <b>bukan</b> okupansi penumpang di dalam kereta pada satu waktu. Aturan: AMAN &lt;90% ambang, WASPADA 90% hingga &lt;100%, KRITIS ≥100%.</div>
-    <div class="tools"><label>Ambang (ribu penumpang) <input type="number" id="thr" min="0" step="100" value="${ambang ?? ''}" placeholder="Menunggu data"></label></div>
-    <div class="grid g2"><div class="card"><h2>Batas atas 95% vs ambang (ribu penumpang)</h2><div class="chart">${hasF() ? '<canvas id="r1"></canvas>' : empty()}</div></div>
-    <div class="card"><h2>Sensitivitas ambang</h2><div id="sens">${empty()}</div></div></div>
+    $('#view').innerHTML = head('Risiko Kapasitas', 'Skenario padat (95%) dibandingkan kapasitas layanan') + `
+    <div class="note">Kapasitas layanan adalah <b>parameter sistem</b>, bukan kapasitas resmi. Perkiraan bulanan juga <b>bukan</b> okupansi penumpang di dalam kereta pada satu waktu. Aturan status: Aman di bawah 90%, Waspada 90% hingga di bawah 100%, Kritis 100% atau lebih.</div>
+    <div class="tools"><label>Kapasitas layanan (ribu penumpang) <input type="number" id="thr" min="0" step="100" value="${ambang ?? ''}" placeholder="Menunggu data"></label></div>
+    <div class="grid g2"><div class="card"><h2>Skenario padat (95%) vs kapasitas (ribu penumpang)</h2><div class="chart">${hasF() ? '<canvas id="r1"></canvas>' : empty()}</div></div>
+    <div class="card"><h2>Sensitivitas kapasitas</h2><div id="sens">${empty()}</div></div></div>
     <div class="card"><h2>Risiko 6 bulan ke depan</h2><div class="tbl" id="rt">${empty()}</div></div>`;
     const draw = () => {
       const F = D.forecast; if (!F.length) return;
-      $('#rt').innerHTML = '<table><tr><th>Bulan</th><th>Batas atas 95%</th><th>Ambang</th><th>% terhadap ambang</th><th>Status</th></tr>' + F.map((r) => { const k = rr(r); return `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.u95)}</td><td>${fmt(ambang)}</td><td>${k.p != null ? pf.format(k.p) + '%' : '--'}</td><td>${badge(k.s)}</td></tr>`; }).join('') + '</table>';
-      chart('r1', { type: 'line', data: { labels: F.map((r) => r.bulan), datasets: [{ label: 'Batas atas 95%', data: F.map((r) => r.u95), borderColor: NAVY, borderWidth: 2, pointBackgroundColor: F.map((r) => COL[rr(r).s] || NAVY), pointRadius: 5 }, { label: 'Ambang kapasitas', data: F.map(() => ambang || null), borderColor: COL.kritis, borderDash: [6, 4], pointRadius: 0 }] },
+      $('#rt').innerHTML = '<table><tr><th>Bulan</th><th>Skenario padat (95%)</th><th>Kapasitas layanan</th><th>Tingkat keterisian</th><th>Status</th></tr>' + F.map((r) => { const k = rr(r); return `<tr><td>${bln(r.bulan)}</td><td>${fmt(r.u95)}</td><td>${fmt(ambang)}</td><td>${k.p != null ? pf.format(k.p) + '%' : '--'}</td><td>${badge(k.s)}</td></tr>`; }).join('') + '</table>';
+      chart('r1', { type: 'line', data: { labels: F.map((r) => r.bulan), datasets: [{ label: 'Skenario padat (95%)', data: F.map((r) => r.u95), borderColor: NAVY, borderWidth: 2, pointBackgroundColor: F.map((r) => COL[rr(r).s] || NAVY), pointRadius: 5 }, { label: 'Kapasitas layanan', data: F.map(() => ambang || null), borderColor: COL.kritis, borderDash: [6, 4], pointRadius: 0 }] },
         options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { title: (i) => bln(i[0].label), label: (c) => ` ${c.dataset.label}: ${fmt(c.raw)} ribu` } } }, scales: { y: ax('ribu penumpang'), x: { ticks: { callback(v) { return bln(this.getLabelForValue(v)); } } } } } });
       if (!ambang) return;
-      $('#sens').innerHTML = '<table><tr><th>Skenario</th><th>Ambang</th><th>Kritis / Waspada</th></tr>' + [['-10%', .9], ['-5%', .95], ['Dasar', 1], ['+5%', 1.05], ['+10%', 1.1]].map(([n, f]) => { const S = F.map((r) => risk(r.u95, ambang * f).s); return `<tr><td>${n}</td><td>${fmt(ambang * f)}</td><td>${S.filter((s) => s === 'kritis').length} / ${S.filter((s) => s === 'waspada').length} bulan</td></tr>`; }).join('') + '</table>';
+      $('#sens').innerHTML = '<table><tr><th>Skenario</th><th>Kapasitas layanan</th><th>Kritis / Waspada</th></tr>' + [['-10%', .9], ['-5%', .95], ['Dasar', 1], ['+5%', 1.05], ['+10%', 1.1]].map(([n, f]) => { const S = F.map((r) => risk(r.u95, ambang * f).s); return `<tr><td>${n}</td><td>${fmt(ambang * f)}</td><td>${S.filter((s) => s === 'kritis').length} / ${S.filter((s) => s === 'waspada').length} bulan</td></tr>`; }).join('') + '</table>';
     };
     $('#thr').onchange = (e) => { ambang = e.target.value ? +e.target.value : null; draw(); }; draw();
   },
@@ -292,7 +292,7 @@ const pages = {
           <button class="chip-btn" data-q="Bagaimana analisis risiko kapasitas dan status kritis?">⚠️ Analisis Risiko Kapasitas</button>
           <button class="chip-btn" data-q="Apa rekomendasi operasional untuk manajemen KAI?">💡 Rekomendasi Kebijakan Armada</button>
           <button class="chip-btn" data-q="Bagaimana pola musiman Lebaran dan hari kerja?">🗓️ Pola Musiman & Lebaran</button>
-          <button class="chip-btn" data-q="Apa itu interval prediksi 80% dan 95%?">ℹ️ Edukasi Uncertainty Interval</button>
+          <button class="chip-btn" data-q="Apa itu skenario cukup padat dan skenario padat?">ℹ️ Edukasi Skenario Kepadatan</button>
         </div>
         <div class="chat-body" id="chat-stream">
           <!-- pesan chat akan dimuat di sini -->
@@ -309,10 +309,10 @@ const pages = {
           <dl class="fact-list">
             <div class="fact-item"><dt>Periode Data</dt><dd>${D.meta.periode_data || '--'}</dd></div>
             <div class="fact-item"><dt>Penumpang Terakhir</dt><dd>${fmt(lastH?.nilai)} ribu</dd></div>
-            <div class="fact-item"><dt>Prediksi Bulan Depan</dt><dd>${fmt(f1?.titik)} ribu</dd></div>
-            <div class="fact-item"><dt>Batas Atas 95%</dt><dd>${fmt(f1?.u95)} ribu</dd></div>
-            <div class="fact-item"><dt>Ambang Kapasitas</dt><dd>${fmt(ambang)} ribu</dd></div>
-            <div class="fact-item"><dt>Status Risiko Awal</dt><dd>${badge(f1 ? rr(f1).s : null)}</dd></div>
+            <div class="fact-item"><dt>Perkiraan bulan depan</dt><dd>${fmt(f1?.titik)} ribu</dd></div>
+            <div class="fact-item"><dt>Skenario padat (95%)</dt><dd>${fmt(f1?.u95)} ribu</dd></div>
+            <div class="fact-item"><dt>Kapasitas layanan</dt><dd>${fmt(ambang)} ribu</dd></div>
+            <div class="fact-item"><dt>Status awal</dt><dd>${badge(f1 ? rr(f1).s : null)}</dd></div>
           </dl>
           <p style="font-size:12px;color:var(--mut);margin:14px 0 0;line-height:1.5">Asisten AI hanya menjawab berdasarkan fakta data numerik yang telah divalidasi tanpa rekayasa angka (Zero Hallucination).</p>
         </div>
@@ -321,7 +321,7 @@ const pages = {
           <div class="ch"><div><h2>Panduan Pertanyaan</h2><div class="sub">Contoh topik interaktif</div></div></div>
           <ul class="ins" style="font-size:12.5px;color:#475569">
             <li>Tanyakan perbandingan bulan tertentu: <em>"Berapa prediksi bulan Desember?"</em></li>
-            <li>Tanyakan alasan lonjakan: <em>"Kenapa batas atas 95% berstatus kritis?"</em></li>
+            <li>Tanyakan alasan lonjakan: <em>"Kenapa skenario padat 95% berstatus kritis?"</em></li>
             <li>Tanyakan skenario: <em>"Bagaimana jika kapasitas dinaikkan 10%?"</em></li>
           </ul>
         </div>
@@ -345,7 +345,7 @@ const pages = {
           <li><strong>Cakupan Periode:</strong> ${bln(f_first.bulan)} hingga ${bln(f_end.bulan)}.</li>
           <li><strong>Rentang Estimasi Titik:</strong> Volume bulanan diproyeksikan berada di kisaran <strong>${fmt(minPt.titik)} ribu</strong> (${bln(minPt.bulan)}) hingga <strong>${fmt(maxPt.titik)} ribu</strong> (${bln(maxPt.bulan)}).</li>
           <li><strong>Puncak Permintaan:</strong> Terjadi pada <strong>${bln(maxPt.bulan)}</strong> dengan estimasi titik <strong>${fmt(maxPt.titik)} ribu</strong> penumpang (didorong mobilitas libur akhir tahun & cuti bersama).</li>
-          <li><strong>Batas Ketidakpastian (Upper 95%):</strong> Risiko volume tertinggi mencapai <strong>${fmt(worstRisk.u95)} ribu</strong> pada <strong>${bln(worstRisk.bulan)}</strong>.</li>
+          <li><strong>Skenario padat (95%):</strong> Risiko volume tertinggi mencapai <strong>${fmt(worstRisk.u95)} ribu</strong> pada <strong>${bln(worstRisk.bulan)}</strong>.</li>
           <li><strong>Kesimpulan Dinamika:</strong> Tren pasca-COVID stabil di level rata-rata 30–32 juta/bulan, mengindikasikan bahwa laju pertumbuhan mulai tertahan oleh batas fisik daya tampung rangkaian (*capacity ceiling*).</li>
         </ul>`;
       }
@@ -354,12 +354,12 @@ const pages = {
       if (q.includes('risiko') || q.includes('kapasitas') || q.includes('ambang') || q.includes('kritis') || q.includes('waspada') || q.includes('aman') || q.includes('overload')) {
         return `<p>Berikut adalah <strong>Analisis Risiko Kapasitas Sistem KRL</strong>:</p>
         <ul>
-          <li><strong>Ambang Batas Operasional:</strong> Ditetapkan pada <strong>${fmt(ambang)} ribu penumpang/bulan</strong> (representasi daya angkut maksimal armada saat ini).</li>
-          <li><strong>Status Risiko Tertinggi:</strong> Terdeteksi berstatus <span class="badge ${worstRisk.s}">${worstRisk.s.toUpperCase()}</span> pada <strong>${bln(worstRisk.bulan)}</strong> dengan rasio batas atas setara <strong>${pf.format(worstRisk.p)}%</strong> dari ambang.</li>
-          <li><strong>Bulan Berstatus Kritis:</strong> ${kritisMonths.length ? kritisMonths.map((m) => `<strong>${bln(m.bulan)}</strong> (${fmt(m.u95)} ribu)`).join(', ') : 'Tidak ada bulan yang melampaui 100% ambang.'}</li>
+          <li><strong>Kapasitas layanan:</strong> Ditetapkan pada <strong>${fmt(ambang)} ribu penumpang/bulan</strong> (representasi daya angkut maksimal armada saat ini).</li>
+          <li><strong>Status Risiko Tertinggi:</strong> Terdeteksi berstatus <span class="badge ${worstRisk.s}">${worstRisk.s.toUpperCase()}</span> pada <strong>${bln(worstRisk.bulan)}</strong> dengan tingkat keterisian skenario padat setara <strong>${pf.format(worstRisk.p)}%</strong> dari kapasitas layanan.</li>
+          <li><strong>Bulan Berstatus Kritis:</strong> ${kritisMonths.length ? kritisMonths.map((m) => `<strong>${bln(m.bulan)}</strong> (${fmt(m.u95)} ribu)`).join(', ') : 'Tidak ada bulan yang melampaui kapasitas layanan.'}</li>
           <li><strong>Bulan Berstatus Waspada:</strong> ${waspadaMonths.length ? waspadaMonths.map((m) => `<strong>${bln(m.bulan)}</strong> (${fmt(m.u95)} ribu)`).join(', ') : 'Nihil.'}</li>
         </ul>
-        <p>⚠️ <em>Catatan Penting:</em> Status KRITIS ditentukan oleh <strong>Batas Atas 95%</strong> (skenario terburuk), bukan titik rata-rata. Tujuannya adalah prinsip kehati-hatian (*safety margin*) agar operator tidak mengalami *service breakdown* saat lonjakan tak terduga.</p>`;
+        <p>⚠️ <em>Catatan Penting:</em> Status KRITIS ditentukan oleh <strong>Skenario padat (95%)</strong> (kemungkinan terburuk), bukan perkiraan utama. Tujuannya adalah prinsip kehati-hatian (*safety margin*) agar operator tidak mengalami *service breakdown* saat lonjakan tak terduga.</p>`;
       }
 
       // 3. Rekomendasi Kebijakan Armada
@@ -386,12 +386,12 @@ const pages = {
 
       // 5. Penjelasan Ketidakpastian & Prediction Interval
       if (q.includes('interval') || q.includes('ketidakpastian') || q.includes('uncertainty') || q.includes('80%') || q.includes('95%') || q.includes('conformal') || q.includes('cqr') || q.includes('metode')) {
-        return `<p>Berikut penjelasan tentang <strong>Interval Prediksi & Kuantifikasi Ketidakpastian (Uncertainty Quantification)</strong>:</p>
+        return `<p>Berikut penjelasan tentang <strong>Skenario Cukup Padat dan Skenario Padat</strong>:</p>
         <ul>
-          <li><strong>Kelemahan "Point Forecast":</strong> Meramal dengan 1 angka tunggal berbahaya. Jika realisasi penumpang berada di atas estimasi, stasiun lumpuh karena penumpukan; jika di bawahnya, terjadi pemborosan energi listrik dan armada.</li>
-          <li><strong>Interval Prediksi 80%:</strong> Menunjukkan rentang realistis operasional reguler (80% kemungkinan aktual berada di dalam rentang tersebut).</li>
-          <li><strong>Interval Prediksi 95%:</strong> Menunjukkan pita ketidakpastian tinggi sebagai jaring pengaman (*safety net*) mitigasi risiko darurat.</li>
-          <li><strong>Metode Conformal Prediction:</strong> Dikalibrasi secara empiris dari residual *out-of-sample* backtest historis tanpa memaksakan asumsi distribusi normal Gaussian yang sering meleset pada data nyata.</li>
+          <li><strong>Kelemahan satu angka:</strong> Meramal dengan 1 angka tunggal berbahaya. Jika realisasi penumpang berada di atas estimasi, stasiun lumpuh karena penumpukan; jika di bawahnya, terjadi pemborosan energi listrik dan armada.</li>
+          <li><strong>Skenario cukup padat (80%):</strong> Menunjukkan rentang realistis operasional reguler (80% kemungkinan aktual berada di dalam rentang tersebut).</li>
+          <li><strong>Skenario padat (95%):</strong> Menunjukkan kemungkinan terburuk sebagai jaring pengaman (*safety net*) mitigasi risiko darurat. Perkiraan masih bisa meleset cukup jauh; gunakan sebagai arahan perencanaan, bukan angka pasti.</li>
+          <li><strong>Metode kalibrasi:</strong> Dikalibrasi secara empiris dari residual *out-of-sample* backtest historis tanpa memaksakan asumsi distribusi normal Gaussian yang sering meleset pada data nyata.</li>
         </ul>`;
       }
 
@@ -404,11 +404,11 @@ const pages = {
           const rk = rr(found);
           return `<p>Detail Proyeksi untuk <strong>${bln(found.bulan)}</strong>:</p>
           <ul>
-            <li><strong>Prediksi Titik (Point Forecast):</strong> <span class="stat-highlight">${fmt(found.titik)} ribu penumpang</span></li>
-            <li><strong>Rentang Interval 80%:</strong> ${fmt(found.l80)} s.d. ${fmt(found.u80)} ribu penumpang</li>
-            <li><strong>Rentang Interval 95%:</strong> ${fmt(found.l95)} s.d. ${fmt(found.u95)} ribu penumpang</li>
-            <li><strong>Batas Atas Risiko (95% Upper):</strong> ${fmt(found.u95)} ribu penumpang</li>
-            <li><strong>Rasio terhadap Ambang:</strong> ${rk.p != null ? pf.format(rk.p) + '%' : '--'} (Ambang: ${fmt(ambang)} ribu)</li>
+            <li><strong>Perkiraan jumlah penumpang:</strong> <span class="stat-highlight">${fmt(found.titik)} ribu penumpang</span></li>
+            <li><strong>Skenario cukup padat (80%):</strong> ${fmt(found.l80)} s.d. ${fmt(found.u80)} ribu penumpang</li>
+            <li><strong>Skenario padat (95%):</strong> ${fmt(found.l95)} s.d. ${fmt(found.u95)} ribu penumpang</li>
+            <li><strong>Batas atas skenario padat (95%):</strong> ${fmt(found.u95)} ribu penumpang</li>
+            <li><strong>Tingkat keterisian terhadap kapasitas:</strong> ${rk.p != null ? pf.format(rk.p) + '%' : '--'} (Kapasitas layanan: ${fmt(ambang)} ribu)</li>
             <li><strong>Status Risiko:</strong> ${badge(rk.s)}</li>
           </ul>`;
         }
@@ -418,7 +418,7 @@ const pages = {
       return `<p>Terima kasih atas pertanyaannya! Berdasarkan basis data cerdas KRL Jabodetabek:</p>
       <ul>
         <li>Posisi data aktual terakhir (<strong>${bln(lastH.bulan)}</strong>) mencatatkan volume <strong>${fmt(lastH.nilai)} ribu</strong> penumpang.</li>
-        <li>Proyeksi bulan terdekat (<strong>${bln(f_first.bulan)}</strong>) adalah <strong>${fmt(f_first.titik)} ribu</strong> dengan batas atas risiko 95% mencapai <strong>${fmt(f_first.u95)} ribu</strong>.</li>
+        <li>Proyeksi bulan terdekat (<strong>${bln(f_first.bulan)}</strong>) adalah <strong>${fmt(f_first.titik)} ribu</strong> dengan skenario padat (95%) mencapai <strong>${fmt(f_first.u95)} ribu</strong>.</li>
         <li>Kondisi ini menempatkan status operasional pada level ${badge(rr(f_first).s)}.</li>
       </ul>
       <p>Anda dapat mengklik tombol topik cepat di atas untuk melihat <em>Ringkasan Proyeksi 6 Bulan</em>, <em>Analisis Risiko Kapasitas</em>, atau <em>Rekomendasi Kebijakan Armada</em> secara mendalam.</p>`;
