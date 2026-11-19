@@ -26,7 +26,9 @@ class Settings(BaseSettings):
     krl_capacity_weekday_ribu: float | None = Field(default=None, gt=0)
     krl_capacity_weekend_ribu: float | None = Field(default=None, gt=0)
     krl_risk_waspada_ratio: float = Field(default=0.90, gt=0, lt=1)
-    ollama_base_url: str = "http://ollama:11434"
+    # Batas request per menit per IP untuk endpoint mahal (insight, simulasi). 0 = nonaktif.
+    rate_limit_per_minute: int = Field(default=120, ge=0)
+    ollama_base_url: str ="http://ollama:11434"
     ollama_model: str = "qwen3.5:4b"
     ollama_timeout_seconds: int = Field(default=12, ge=1)
     ollama_max_concurrency: int = Field(default=1, ge=1)

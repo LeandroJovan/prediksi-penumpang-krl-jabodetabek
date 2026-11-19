@@ -1,11 +1,13 @@
-from pathlib import Path
+from typing import Annotated, Literal
+
 import pandas as pd
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session, redis_client, settings
 from backend.app.core.config import REPO_ROOT, Settings
+from backend.app.core.security import rate_limit
 from backend.app.schemas.forecast import ForecastResponse
 from backend.app.services.forecast import ForecastService
 
@@ -14,12 +16,14 @@ router = APIRouter(prefix="/risk", tags=["risk"])
 
 
 class RiskSimulationRequest(BaseModel):
-    capacity_weekday_ribu: float | None = Field(default=None, gt=0)
-    capacity_weekend_ribu: float | None = Field(default=None, gt=0)
-    ambang_kapasitas: float | None = Field(default=None, gt=0)
-    batas_waspada: float = Field(default=0.90, gt=0, lt=1)
-    kolom_batas_atas: str = "batas_atas_95"
-    horizons: list[int] | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    capacity_weekday_ribu: float | None = Field(default=None, gt=0, le=1_000_000, allow_inf_nan=False)
+    capacity_weekend_ribu: float | None = Field(default=None, gt=0, le=1_000_000, allow_inf_nan=False)
+    ambang_kapasitas: float | None = Field(default=None, gt=0, le=1_000_000, allow_inf_nan=False)
+    batas_waspada: float = Field(default=0.90, gt=0, lt=1, allow_inf_nan=False)
+    kolom_batas_atas: Literal["batas_atas_80", "batas_atas_95"] = "batas_atas_95"
+    horizons: list[Annotated[int, Field(ge=1, le=24)]] | None = Field(default=None, max_length=24)
 
 
 @router.get("/latest", response_model=ForecastResponse)
@@ -32,7 +36,7 @@ async def latest_risk(
     return await ForecastService(session, app_settings, redis).latest()
 
 
-@router.post("/simulate", response_model=ForecastResponse)
+@router.post("/simulate", response_model=ForecastResponse, dependencies=[Depends(rate_limit)])
 async def simulate_risk(
     payload: RiskSimulationRequest,
     session: AsyncSession = Depends(db_session),
@@ -40,7 +44,7 @@ async def simulate_risk(
     redis=Depends(redis_client),
 ) -> ForecastResponse:
     """Simulasi reaktif status risiko kapasitas dengan ambang atau interval custom."""
-    basis = "80" if "80" in payload.kolom_batas_atas else "95"
+    basis = "80" if payload.kolom_batas_atas == "batas_atas_80" else "95"
     update_dict = {"krl_risk_waspada_ratio": payload.batas_waspada}
     if payload.capacity_weekday_ribu is not None:
         update_dict["krl_capacity_weekday_ribu"] = payload.capacity_weekday_ribu
