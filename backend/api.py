@@ -142,8 +142,11 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
     # 1. Historis
     hist_file = FOLDER_PROCESSED / "data_final.csv"
     hist_list = []
+    lebaran: list[str] = []
     if hist_file.exists():
         df_hist = pd.read_csv(hist_file)
+        if "is_lebaran" in df_hist.columns:
+            lebaran = [str(r.year_month) for r in df_hist.itertuples() if bool(r.is_lebaran)]
         for r in df_hist.itertuples():
             hist_list.append({
                 "bulan": str(r.year_month),
@@ -200,7 +203,8 @@ def build_dashboard_bundle(ambang_kapasitas=cfg.AMBANG_KAPASITAS):
             "periode_data": periode_label,
             "diperbarui": _output_updated(fc_file),
             "model_terpilih": "LightGBM + Conformal CQR",
-            "lebaran": ["2017-06", "2018-06", "2019-06", "2022-05", "2023-04", "2024-04", "2025-03", "2026-03"],
+            "lebaran": lebaran,  # dari kolom is_lebaran data_final.csv, bukan daftar tulisan tangan
+            "sumber_forecast": "csv_pipeline",
         },
         "ambang_kapasitas": {
             "nilai": float(ambang_kapasitas),

@@ -50,16 +50,35 @@ function demoData() { // DATA DEMO: sintetis, hanya untuk pratinjau tampilan
     evaluasi: { keseluruhan: names.map((n, i) => ({ model: n, ...ev([1.4, 1.1, 0.9, 0.85, 0.95][i]) })), pasca_covid: names.map((n, i) => ({ model: n, mase: [1.3, 1.0, 0.8, 0.8, 0.9][i] })) }
   };
 }
+/* Sumber utama: backend (/api/v1/dashboard, prakiraan dari model aktif). Cadangan: data/data.json statis. */
+async function fetchBundle() {
+  const base = (typeof window !== 'undefined' && window.KRL_API_BASE) || '';
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), 15000) : null;
+  try {
+    const r = await fetch(`${base}/api/v1/dashboard`, { signal: ctl ? ctl.signal : undefined });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const b = await r.json();
+    if (!b || !Array.isArray(b.forecast) || !Array.isArray(b.historis) || !b.ambang_kapasitas) throw new Error('format');
+    return { bundle: b, live: true };
+  } catch (e) {
+    return { bundle: await (await fetch('data/data.json')).json(), live: false };
+  } finally { if (timer) clearTimeout(timer); }
+}
 async function load() {
   const demo = DEMO_FLAG();
-  try { D = demo ? demoData() : await (await fetch('data/data.json')).json(); }
+  let live = false;
+  try {
+    if (demo) D = demoData();
+    else { const res = await fetchBundle(); D = res.bundle; live = res.live; }
+  }
   catch (e) { D = null; }
   if (!D) { $('#view').innerHTML = '<div class="card"><div class="empty">Gagal memuat data/data.json. Jalankan lewat server lokal (mis. <code>python -m http.server</code>).</div></div>'; return; }
   ambang = D.ambang_kapasitas.nilai;
   if (demo) { $('#banner').hidden = false; $('#banner').textContent = 'MODE DEMO: seluruh angka sintetis untuk pratinjau desain. Bukan data atau hasil prediksi nyata.'; }
   $('#sf-periode').textContent = D.meta.periode_data || '--';
   const ready = D.historis.length && D.forecast.length;
-  $('#sf-status').textContent = demo ? 'Mode demo' : ready ? 'Data terhubung' : 'Menunggu data';
+  $('#sf-status').textContent = demo ? 'Mode demo' : !ready ? 'Menunggu data' : live ? 'Backend terhubung' : 'Data statis (backend tidak terjangkau)';
   $('#sf-dot').style.background = demo ? '#f59e0b' : ready ? '#22c55e' : '#94a3b8';
   route();
 }

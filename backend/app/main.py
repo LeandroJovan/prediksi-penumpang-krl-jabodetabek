@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select, text
 
+from backend.app.api.v1.endpoints import dashboard
 from backend.app.api.v1.router import api_router
 from backend.app.core.cache import InMemoryCache
 from backend.app.core.config import REPO_ROOT, get_settings
@@ -112,12 +113,9 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AppError, app_error_handler)
     app.include_router(api_router, prefix="/api/v1")
 
-    @app.get("/api/data", tags=["dashboard"])
-    @app.get("/api/v1/data", tags=["dashboard"])
-    async def get_dashboard_bundle_endpoint(ambang_kapasitas: float = 34000.0):
-        """Menyajikan bundle JSON lengkap untuk konsumsi langsung oleh frontend dashboard."""
-        from backend.api import build_dashboard_bundle
-        return build_dashboard_bundle(ambang_kapasitas=ambang_kapasitas)
+    app.add_api_route(
+        "/api/data", dashboard.dashboard_bundle, methods=["GET"], tags=["dashboard"], include_in_schema=False
+    )
 
     frontend = REPO_ROOT / "frontend"
     if frontend.exists():

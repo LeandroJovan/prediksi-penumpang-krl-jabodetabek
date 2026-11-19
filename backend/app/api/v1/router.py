@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from backend.app.api.v1.endpoints import (
     admin,
     chat,
+    dashboard,
     forecasts,
     health,
     insights,
@@ -23,4 +24,5 @@ api_router.include_router(metrics.router)
 api_router.include_router(risk.router)
 api_router.include_router(insights.router)
 api_router.include_router(chat.router)
+api_router.include_router(dashboard.router)
 api_router.include_router(admin.router)
