@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     ollama_max_concurrency: int = Field(default=1, ge=1)
     ai_insight_cache_ttl_seconds: int = Field(default=86400, ge=1)
     ai_insight_max_output_chars: int = Field(default=500, ge=100, le=2000)
+    # Chatbot: pertanyaan umum dijawab aturan+fakta; LLM hanya untuk pertanyaan bebas (bila aktif).
+    chat_use_llm: bool = True
     ai_insight_prompt_version: str = "1.0"
 
     @property

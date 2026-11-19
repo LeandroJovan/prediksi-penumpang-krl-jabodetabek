@@ -196,3 +196,32 @@ async def test_endpoint_language_en_returns_english(monkeypatch):
     assert res.status_code == 200
     assert res.json()["data"]["source"] == "fallback"
     assert "juta" not in res.json()["data"]["conclusion"]
+
+
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        ("99.999", {99999.0}),  # ribuan Indonesia; BUKAN juga 99,999 (≈100) yang meloloskan angka karangan
+        ("37.900", {37900.0}),
+        ("1.234.567", {1234567.0}),
+        ("37,9", {37.9}),
+        ("37.9", {37.9}),
+        ("1.234,5", {1234.5}),
+        ("1,234.5", {1234.5}),
+        ("37,900", {37900.0, 37.9}),
+        ("42", {42.0}),
+    ],
+)
+def test_number_candidates_are_unambiguous(token, expected):
+    from backend.app.services.insights import _number_candidates
+
+    assert _number_candidates(token) == expected
+
+
+def test_grounding_rejects_number_that_only_resembles_a_constant():
+    from backend.app.services.insights import assert_numbers_grounded
+
+    facts = {"peak_upper95": 37900, "n": 6}
+    assert_numbers_grounded(["Puncak 37.900 ribu atau 37,9 juta."], facts)
+    with pytest.raises(ValueError):
+        assert_numbers_grounded(["Penumpang mencapai 99.999 ribu."], facts)
