@@ -4,23 +4,34 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+REPO_ROOT: Path = Path(__file__).resolve().parents[3]
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=[".env", "backend/.env"],
+        extra="ignore",
+    )
 
     app_name: str = "KRL Forecast API"
     app_env: str = "development"
-    database_url: str
-    redis_url: str
-    cors_origins: str = ""
+    database_url: str = "sqlite+aiosqlite:///./krl_forecast.db"
+    redis_url: str | None = None
+    cors_origins: str = "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://localhost:5000,http://localhost:8501"
     krl_api_key: str | None = None
-    artifacts_dir: Path = Path("artifacts/models")
+    artifacts_dir: Path = REPO_ROOT / "artifacts/models"
     forecast_cache_ttl_seconds: int = Field(default=3600, ge=1)
     inference_timeout_seconds: int = Field(default=15, ge=1)
+    inference_max_concurrency: int = Field(default=2, ge=1, le=16)
+    # Jika diisi, manifest model wajib memuat `signature` = HMAC-SHA256(key, sha256 model.pkl).
+    model_signing_key: str | None = None
+    krl_capacity_monthly_ribu: float = Field(default=34000.0, gt=0)
     krl_capacity_weekday_ribu: float | None = Field(default=None, gt=0)
     krl_capacity_weekend_ribu: float | None = Field(default=None, gt=0)
     krl_risk_waspada_ratio: float = Field(default=0.90, gt=0, lt=1)
-    ollama_base_url: str = "http://ollama:11434"
+    # Batas request per menit per IP untuk endpoint mahal (insight, simulasi). 0 = nonaktif.
+    rate_limit_per_minute: int = Field(default=120, ge=0)
+    ollama_base_url: str ="http://ollama:11434"
     ollama_model: str = "qwen3.5:4b"
     ollama_timeout_seconds: int = Field(default=12, ge=1)
     ollama_max_concurrency: int = Field(default=1, ge=1)

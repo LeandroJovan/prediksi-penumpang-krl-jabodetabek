@@ -9,6 +9,10 @@ RUN pip install --no-cache-dir /tmp/backend
 COPY backend /app/backend
 COPY krl_core /app/krl_core
 COPY frontend /app/frontend
+# Data & output pipeline dibutuhkan untuk fallback CSV, seed DB, dan /api/data (backend/api.py).
+COPY src /app/src
+COPY data /app/data
+COPY outputs /app/outputs
 
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser

@@ -68,6 +68,13 @@ Thumbs.db
 # Streamlit local config
 .streamlit/secrets.toml
 
+# Databases & Coverage
+*.db
+*.sqlite3
+.coverage
+.pytest_cache/
+htmlcov/
+
 # Scratch files
 scratch/
 

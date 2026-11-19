@@ -432,15 +432,25 @@ Base path: `/api/v1`.
 | GET | `/insights/latest` | Summary dan rekomendasi AI untuk forecast aktif |
 | POST | `/insights/simulate` | Summary AI dari simulasi kapasitas |
 
-### Admin (disiapkan, belum MVP)
+### Admin
 
-| Method | Endpoint | Fungsi |
-|---|---|---|
-| POST | `/admin/import-model` | Import artifact (opsional fase lanjutan) |
-| POST | `/admin/activate-model/{run_id}` | Aktifkan model |
-| POST | `/admin/cache/clear` | Bersihkan cache |
-| POST | `/admin/data/refresh` | Upload data baru |
-| POST | `/admin/retrain` | Trigger training (di luar backend) |
+| Method | Endpoint | Fungsi | Status |
+|---|---|---|---|
+| GET | `/admin/status` | Ringkasan sistem (model aktif, cache, jumlah data, status keamanan; tanpa rahasia) | Tersedia |
+| POST | `/admin/cache/clear` | Bersihkan cache `forecast:*` dan `insight:*` saja | Tersedia |
+| POST | `/admin/seed` | Jalankan ulang seed (idempoten) lalu bersihkan cache | Tersedia |
+| POST | `/admin/activate-model/{run_id}` | Jadikan satu-satunya model aktif; hanya model ber-artifact (`model.pkl` + `manifest.json` di bawah `ARTIFACTS_DIR`), selain itu 409 | Tersedia |
+| POST | `/admin/import-model` | Import artifact | Fase lanjutan |
+| POST | `/admin/data/refresh` | Upload data baru | Fase lanjutan |
+| POST | `/admin/retrain` | Trigger training (di luar backend) | Fase lanjutan |
+
+Perilaku keamanan:
+
+- **Fail-closed:** jika `KRL_API_KEY` kosong, kurang dari 16 karakter, atau sama dengan placeholder
+  template, seluruh endpoint admin menjawab `503` (bukan terbuka).
+- Kunci hanya dibaca dari header (bukan query string) dan dibandingkan constant-time.
+- 10 percobaan gagal per menit per IP mengunci IP tersebut (`429` + `Retry-After`), termasuk untuk kunci benar.
+- Setiap aksi dicatat di log `krl_backend.admin` beserta `request_id` (kunci tidak pernah dicatat).
 
 Semua endpoint admin memakai header:
 
