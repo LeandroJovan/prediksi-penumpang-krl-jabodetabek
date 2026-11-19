@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -67,7 +66,7 @@ class ForecastService:
         if model_run and Path(model_run.artifact_path).is_dir():
             try:
                 history, calendar = await self._input_data(model_run.horizon_max)
-                bundle, manifest = load_bundle(model_run.artifact_path)
+                bundle, manifest = await run_in_threadpool(load_bundle, model_run.artifact_path)
                 manifest_unit = manifest.get("unit", "ribu_orang")
                 raw = await asyncio.wait_for(
                     run_in_threadpool(bundle.predict, history, calendar),
@@ -128,6 +127,7 @@ class ForecastService:
                 await self.session.execute(select(ModelRun).where(ModelRun.is_active.is_(True)))
             ).scalar_one_or_none()
         except Exception:
+            logger.exception("Gagal membaca model aktif dari DB")
             return None
 
     async def _build_items_from_prediction(
@@ -180,7 +180,7 @@ class ForecastService:
             raise AppError("DATA_NOT_AVAILABLE", 503, "Forecast output CSV not found.")
 
         try:
-            df = read_forecast_csv(csv_path)
+            df = await run_in_threadpool(read_forecast_csv, csv_path)
         except ForecastCsvError as exc:
             raise AppError("DATA_NOT_AVAILABLE", 503, str(exc)) from exc
         df = df[df["horizon"].isin(requested_horizons)]
@@ -190,7 +190,7 @@ class ForecastService:
             rows = (await self.session.execute(select(Calendar))).scalars().all()
             calendar_by_period = {row.period: row.__dict__ for row in rows}
         except Exception:
-            pass
+            logger.exception("Gagal membaca kalender dari DB; memakai kalender default")
 
         items = []
         for row in df.itertuples(index=False):

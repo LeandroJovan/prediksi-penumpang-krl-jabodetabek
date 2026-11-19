@@ -1,12 +1,12 @@
 import logging
 
-import pandas as pd
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session
 from backend.app.core.config import REPO_ROOT
+from backend.app.core.pipeline_data import read_csv_async
 from backend.app.db.models import Metric, ModelRun
 
 ROOT = REPO_ROOT
@@ -63,7 +63,7 @@ async def list_metrics(
     if horizon is not None:
         csv_file = ROOT / "outputs/metrik_per_horizon_final.csv"
         if csv_file.exists():
-            df = pd.read_csv(csv_file)
+            df = await read_csv_async(csv_file)
             if subset:
                 df = df[df["subset"] == subset]
             df = df[df["horizon"] == horizon]
@@ -85,7 +85,7 @@ async def list_metrics(
 
     csv_file = ROOT / "outputs/metrik_komparasi_final.csv"
     if csv_file.exists():
-        df = pd.read_csv(csv_file)
+        df = await read_csv_async(csv_file)
         if subset:
             df = df[df["subset"] == subset]
         return {

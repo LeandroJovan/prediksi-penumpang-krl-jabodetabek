@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 import logging
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +12,7 @@ from backend.app.core.config import REPO_ROOT, get_settings
 from backend.app.core.errors import AppError, app_error_handler
 from backend.app.core.middleware import request_id_middleware
 from backend.app.db.base import Base
-from backend.app.db.models import Actual, ModelRun
+from backend.app.db.models import Actual
 from backend.app.db.session import SessionLocal, engine
 from backend.cli.seed_data import seed_all
 

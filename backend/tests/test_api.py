@@ -216,3 +216,35 @@ async def test_ready_returns_503_without_leaking_when_dependency_down(client: As
     assert body["status"] == "not_ready"
     assert body["checks"] == {"database": "ok", "cache": "unavailable"}
     assert "secret-host" not in res.text
+
+
+@pytest.mark.asyncio
+async def test_db_failure_is_logged_and_falls_back(client: AsyncClient, caplog):
+    from backend.app.api.deps import db_session
+
+    class BrokenSession:
+        async def execute(self, *args, **kwargs):
+            raise RuntimeError("db down")
+
+    async def broken():
+        yield BrokenSession()
+
+    app.dependency_overrides[db_session] = broken
+    try:
+        with caplog.at_level("ERROR"):
+            models = await client.get("/api/v1/models")
+            meta = await client.get("/api/v1/meta")
+            passengers = await client.get("/api/v1/passengers?limit=3")
+    finally:
+        app.dependency_overrides.pop(db_session, None)
+
+    assert models.status_code == meta.status_code == passengers.status_code == 200
+    assert models.json()["data"][0]["run_id"] == "lgbm_cqr_v1"
+    assert len(passengers.json()["data"]) == 3
+    messages = " ".join(r.getMessage() for r in caplog.records)
+    assert "model dari DB" in messages and "metadata dari DB" in messages and "penumpang dari DB" in messages
+
+
+@pytest.mark.asyncio
+async def test_passengers_rejects_non_positive_limit(client: AsyncClient):
+    assert (await client.get("/api/v1/passengers?limit=0")).status_code == 422

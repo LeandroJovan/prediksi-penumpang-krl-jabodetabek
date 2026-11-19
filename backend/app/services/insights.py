@@ -162,7 +162,6 @@ def fallback(facts: dict) -> InsightData:
     n = int(derived.get("n_months") or 0)
     n_kritis = int(derived.get("n_kritis") or 0)
     n_waspada = int(derived.get("n_waspada") or 0)
-    n_aman = int(derived.get("n_aman") or 0)
     capacity = derived.get("capacity_ribu")
     peak_period = derived.get("peak_period")
     peak_upper = derived.get("peak_upper95")

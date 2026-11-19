@@ -1,14 +1,16 @@
-from pathlib import Path
-import pandas as pd
+import logging
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session, settings
 from backend.app.core.config import REPO_ROOT, Settings
+from backend.app.core.pipeline_data import read_csv_async
 from backend.app.db.models import Actual, ModelRun
 
 ROOT = REPO_ROOT
+logger = logging.getLogger("krl_backend.meta")
 router = APIRouter(tags=["meta"])
 
 
@@ -41,12 +43,12 @@ async def metadata(
                 "horizon_max": active.horizon_max,
             }
     except Exception:
-        pass
+        logger.exception("Gagal membaca metadata dari DB; memakai fallback CSV/default")
 
     if start_date is None:
         csv_file = ROOT / "data/processed/data_final.csv"
         if csv_file.exists():
-            df = pd.read_csv(csv_file, parse_dates=["tanggal"])
+            df = await read_csv_async(csv_file, parse_dates=["tanggal"])
             start_date = df["tanggal"].min().strftime("%Y-%m-%d")
             end_date = df["tanggal"].max().strftime("%Y-%m-%d")
             obs_count = len(df)

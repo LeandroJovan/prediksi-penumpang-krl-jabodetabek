@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +8,7 @@ from backend.app.api.deps import db_session
 from backend.app.core.pipeline_data import data_bounds
 from backend.app.db.models import ModelRun
 
+logger = logging.getLogger("krl_backend.models")
 router = APIRouter(prefix="/models", tags=["models"])
 
 DEFAULT_MODELS = [
@@ -66,7 +69,7 @@ async def list_models(session: AsyncSession = Depends(db_session)) -> dict:
                 ]
             }
     except Exception:
-        pass
+        logger.exception("Gagal membaca model dari DB; memakai daftar bawaan")
 
     return {"data": _default_models()}
 
@@ -87,7 +90,7 @@ async def model_detail(run_id: str, session: AsyncSession = Depends(db_session))
                 }
             }
     except Exception:
-        pass
+        logger.exception("Gagal membaca model dari DB; memakai daftar bawaan")
 
     for m in _default_models():
         if m["run_id"] == run_id:

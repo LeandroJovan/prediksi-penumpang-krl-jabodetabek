@@ -1,15 +1,17 @@
+import logging
 from datetime import date
-from pathlib import Path
-import pandas as pd
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session
 from backend.app.core.config import REPO_ROOT
+from backend.app.core.pipeline_data import read_csv_async
 from backend.app.db.models import Actual
 
 ROOT = REPO_ROOT
+logger = logging.getLogger("krl_backend.passengers")
 router = APIRouter(prefix="/passengers", tags=["passengers"])
 
 
@@ -17,7 +19,7 @@ router = APIRouter(prefix="/passengers", tags=["passengers"])
 async def list_passengers(
     start: date | None = None,
     end: date | None = None,
-    limit: int = Query(default=200, le=500),
+    limit: int = Query(default=200, ge=1, le=500),
     session: AsyncSession = Depends(db_session),
 ) -> dict:
     """Mengambil data deret waktu penumpang historis bulanan BPS."""
@@ -31,6 +33,7 @@ async def list_passengers(
     try:
         rows = (await session.execute(statement)).scalars().all()
     except Exception:
+        logger.exception("Gagal membaca data penumpang dari DB; mencoba fallback CSV")
         rows = []
 
     if rows:
@@ -48,7 +51,7 @@ async def list_passengers(
     # Fallback ke CSV jika DB belum terisi
     csv_file = ROOT / "data/processed/data_final.csv"
     if csv_file.exists():
-        df = pd.read_csv(csv_file, parse_dates=["tanggal"])
+        df = await read_csv_async(csv_file, parse_dates=["tanggal"])
         if start:
             df = df[df["tanggal"].dt.date >= start]
         if end:

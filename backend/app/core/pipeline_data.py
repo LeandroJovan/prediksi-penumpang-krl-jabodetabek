@@ -7,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
+from fastapi.concurrency import run_in_threadpool
 
 from backend.app.core.config import REPO_ROOT
 
@@ -28,6 +29,11 @@ def data_bounds(root: Path = REPO_ROOT) -> tuple[date | None, date | None]:
     if not path.exists():
         return None, None
     return _bounds(str(path), path.stat().st_mtime_ns)
+
+
+async def read_csv_async(path: Path, **kwargs) -> pd.DataFrame:
+    """pd.read_csv di threadpool agar tidak memblokir event loop."""
+    return await run_in_threadpool(pd.read_csv, path, **kwargs)
 
 
 def target_periods(frame: pd.DataFrame, last_actual: date | None = None) -> list[date]:

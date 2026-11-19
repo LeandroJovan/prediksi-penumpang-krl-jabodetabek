@@ -1,12 +1,12 @@
 from typing import Annotated, Literal
 
-import pandas as pd
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import db_session, redis_client, settings
 from backend.app.core.config import REPO_ROOT, Settings
+from backend.app.core.pipeline_data import read_csv_async
 from backend.app.core.security import rate_limit
 from backend.app.schemas.forecast import ForecastResponse
 from backend.app.services.forecast import ForecastService
@@ -65,6 +65,6 @@ async def get_sensitivity() -> dict:
     """Mengambil tabel analisis sensitivitas pergeseran kapasitas (-10% s.d. +10%)."""
     path_file = ROOT / "outputs/analisis_sensitivitas_kapasitas.csv"
     if path_file.exists():
-        df = pd.read_csv(path_file)
+        df = await read_csv_async(path_file)
         return {"data": df.to_dict(orient="records")}
     return {"data": []}
