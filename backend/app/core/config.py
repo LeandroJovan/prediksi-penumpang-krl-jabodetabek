@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     artifacts_dir: Path = REPO_ROOT / "artifacts/models"
     forecast_cache_ttl_seconds: int = Field(default=3600, ge=1)
     inference_timeout_seconds: int = Field(default=15, ge=1)
+    inference_max_concurrency: int = Field(default=2, ge=1, le=16)
+    # Jika diisi, manifest model wajib memuat `signature` = HMAC-SHA256(key, sha256 model.pkl).
+    model_signing_key: str | None = None
     krl_capacity_monthly_ribu: float = Field(default=34000.0, gt=0)
     krl_capacity_weekday_ribu: float | None = Field(default=None, gt=0)
     krl_capacity_weekend_ribu: float | None = Field(default=None, gt=0)

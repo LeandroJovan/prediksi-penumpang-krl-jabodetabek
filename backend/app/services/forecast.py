@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from pathlib import Path
 
@@ -13,6 +12,7 @@ from backend.app.core.forecast_csv import ForecastCsvError, read_forecast_csv
 from backend.app.core.pipeline_data import data_bounds
 from backend.app.db.models import Actual, Calendar, ModelRun
 from backend.app.db.queries import get_active_model_run
+from backend.app.ml.inference import run_inference
 from backend.app.ml.loader import load_bundle
 from backend.app.ml.validation import validate_forecast
 from backend.app.schemas.forecast import ForecastItem, ForecastResponse, Interval
@@ -51,7 +51,16 @@ class ForecastService:
         else:
             cap_monthly = self.settings.krl_capacity_monthly_ribu
         ratio = waspada_ratio if waspada_ratio is not None else self.settings.krl_risk_waspada_ratio
-        capacity_key = f"{cap_monthly}:{self.settings.krl_capacity_weekday_ribu}:{self.settings.krl_capacity_weekend_ribu}:{ratio}:{basis_col}"
+        capacity_key = ":".join(
+            str(part)
+            for part in (
+                cap_monthly,
+                self.settings.krl_capacity_weekday_ribu,
+                self.settings.krl_capacity_weekend_ribu,
+                ratio,
+                basis_col,
+            )
+        )
         cache_key = f"forecast:v1:{run_id}:{','.join(map(str, sorted(requested)))}:{capacity_key}"
 
         if self.redis is not None:
@@ -69,9 +78,12 @@ class ForecastService:
                 history, calendar = await self._input_data(model_run.horizon_max)
                 bundle, manifest = await run_in_threadpool(load_bundle, model_run.artifact_path)
                 manifest_unit = manifest.get("unit", "ribu_orang")
-                raw = await asyncio.wait_for(
-                    run_in_threadpool(bundle.predict, history, calendar),
+                raw = await run_inference(
+                    bundle.predict,
+                    history,
+                    calendar,
                     timeout=self.settings.inference_timeout_seconds,
+                    max_concurrency=self.settings.inference_max_concurrency,
                 )
                 result = validate_forecast(raw, model_run.horizon_max)
                 result = result[result["horizon"].isin(requested)]
