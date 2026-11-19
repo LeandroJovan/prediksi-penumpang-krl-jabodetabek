@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: krl
-      POSTGRES_PASSWORD: change-me
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD di file .env (lihat .env.example)}
       POSTGRES_DB: krl_forecast
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
@@ -37,10 +37,15 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    # backend/.env.example hanya template; JANGAN dimuat sebagai konfigurasi (berisi secret placeholder).
     env_file:
-      - path: backend/.env.example
       - path: backend/.env
         required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://krl:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/krl_forecast
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      ARTIFACTS_DIR: /app/artifacts/models
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_healthy}
