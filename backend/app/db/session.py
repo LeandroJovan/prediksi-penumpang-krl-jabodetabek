@@ -1,15 +1,19 @@
 from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from backend.app.core.config import get_settings
 
 settings = get_settings()
 
 if settings.database_url.startswith("sqlite"):
+    # NullPool: koneksi SQLite murah dibuat, dan pool tidak menyimpan koneksi yang terikat ke event loop
+    # lama (penyebab "Event loop is closed" / flaky saat loop berganti, mis. antar test).
     engine = create_async_engine(
         settings.database_url,
         connect_args={"check_same_thread": False},
+        poolclass=NullPool,
     )
 else:
     engine = create_async_engine(

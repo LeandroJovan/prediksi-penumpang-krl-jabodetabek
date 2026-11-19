@@ -52,6 +52,13 @@ class InMemoryCache:
         async with self._lock:
             self._store.pop(key, None)
 
+    async def delete_prefix(self, prefix: str) -> int:
+        async with self._lock:
+            keys = [k for k in self._store if k.startswith(prefix)]
+            for key in keys:
+                del self._store[key]
+            return len(keys)
+
     async def ping(self) -> bool:
         return True
 
