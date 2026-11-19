@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import date
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from backend.app.schemas.forecast import ForecastItem, ForecastResponse, Interva
 from backend.app.services.risk import calculate_risk
 
 ROOT = REPO_ROOT
+logger = logging.getLogger("krl_backend.forecast")
 
 
 class ForecastService:
@@ -54,7 +56,9 @@ class ForecastService:
         if self.redis is not None:
             cached = await self.redis.get(cache_key)
             if cached:
-                return ForecastResponse.model_validate_json(cached)
+                hit = ForecastResponse.model_validate_json(cached)
+                hit.meta["cached"] = True
+                return hit
 
         # 1. Coba inference via bundle jika model artifact tersedia
         items = None
@@ -77,6 +81,9 @@ class ForecastService:
                     basis_col=basis_col,
                 )
             except Exception:
+                logger.exception(
+                    "Inferensi model %s gagal; fallback ke CSV pipeline", model_run.run_id
+                )
                 items = None
 
         # 2. Fallback ke output pipeline ML yang sudah divalidasi (outputs/prediksi_future_6bln.csv)

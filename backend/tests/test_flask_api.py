@@ -113,3 +113,48 @@ def test_flask_frontend_static(client):
     assert res.status_code == 200
     assert b"<!DOCTYPE html>" in res.data or b"<html" in res.data
 
+
+
+# --- Validasi input & penanganan error (audit QA) ---
+@pytest.mark.parametrize(
+    "query",
+    [
+        "ambang_kapasitas=abc",
+        "ambang_kapasitas=0",
+        "ambang_kapasitas=-5",
+        "ambang_kapasitas=nan",
+        "batas_waspada=1.5",
+        "basis_interval=70",
+    ],
+)
+def test_flask_forecast_rejects_invalid_query(query):
+    res = app.test_client().get(f"/api/forecast?{query}")
+    assert res.status_code == 400
+    assert res.get_json()["error"] == "Bad Request"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"ambang_kapasitas": 0},
+        {"batas_waspada": "x"},
+        {"kolom_batas_atas": "bukan_kolom"},
+        [1, 2],
+    ],
+)
+def test_flask_simulate_rejects_invalid_body(body):
+    res = app.test_client().post("/api/simulate-risk", json=body)
+    assert res.status_code == 400
+
+
+def test_flask_unknown_api_path_is_json_404():
+    res = app.test_client().get("/api/tidak-ada")
+    assert res.status_code == 404
+    assert res.get_json()["error"] == "Not Found"
+
+
+def test_flask_metrics_and_passengers_reject_bad_numbers():
+    client = app.test_client()
+    assert client.get("/api/metrics?horizon=abc").status_code == 400
+    assert client.get("/api/passengers?limit=-1").status_code == 400
+    assert client.get("/api/passengers?start=bukan-tanggal").status_code == 400

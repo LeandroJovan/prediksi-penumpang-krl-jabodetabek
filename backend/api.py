@@ -8,6 +8,7 @@ serta melayani antarmuka web Front-End dashboard.
 
 import json
 import logging
+import math
 import os
 import sys
 from pathlib import Path
@@ -27,7 +28,10 @@ sys.path.append(str(BASE_DIR / "src"))
 import config as cfg  # noqa: E402
 import risk as rsk  # noqa: E402
 
-from backend.app.core.forecast_csv import read_forecast_csv  # noqa: E402
+from backend.app.core.forecast_csv import ForecastCsvError, read_forecast_csv  # noqa: E402
+
+MAX_CAPACITY = 1_000_000.0
+ALLOWED_UPPER_COLUMNS = ("batas_atas_80", "batas_atas_95")
 
 # Inisialisasi Flask App
 app = Flask(__name__, static_folder=str(BASE_DIR / "frontend"))
@@ -66,7 +70,64 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    return jsonify({"error": "Internal Server Error", "detail": str(error)}), 500
+    # Detail internal hanya ke log, tidak ke klien.
+    logger.error("Unhandled error: %s", getattr(error, "original_exception", error), exc_info=True)
+    return jsonify({"error": "Internal Server Error", "detail": "Terjadi kesalahan pada server."}), 500
+
+
+class ApiValidationError(ValueError):
+    """Input klien tidak valid -> HTTP 400."""
+
+
+@app.errorhandler(ApiValidationError)
+def validation_error(error):
+    return jsonify({"error": "Bad Request", "detail": str(error)}), 400
+
+
+@app.errorhandler(ForecastCsvError)
+def forecast_csv_error(error):
+    logger.error("Kontrak CSV prakiraan tidak terpenuhi: %s", error)
+    return jsonify({"error": "Service Unavailable", "detail": "Data prakiraan tidak sesuai kontrak."}), 503
+
+
+def _to_float(raw, name, *, gt=None, lt=None, le=None):
+    """Konversi aman ke float finite dengan batas opsional; lempar ApiValidationError jika salah."""
+    if isinstance(raw, bool):
+        raise ApiValidationError(f"Parameter '{name}' harus berupa angka.")
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        raise ApiValidationError(f"Parameter '{name}' harus berupa angka.") from None
+    if not math.isfinite(value):
+        raise ApiValidationError(f"Parameter '{name}' harus berupa angka yang valid.")
+    if gt is not None and not value > gt:
+        raise ApiValidationError(f"Parameter '{name}' harus lebih besar dari {gt}.")
+    if lt is not None and not value < lt:
+        raise ApiValidationError(f"Parameter '{name}' harus lebih kecil dari {lt}.")
+    if le is not None and not value <= le:
+        raise ApiValidationError(f"Parameter '{name}' maksimal {le}.")
+    return value
+
+
+def _to_int(raw, name, *, ge, le):
+    if isinstance(raw, bool):
+        raise ApiValidationError(f"Parameter '{name}' harus berupa bilangan bulat.")
+    try:
+        value = int(str(raw))
+    except ValueError:
+        raise ApiValidationError(f"Parameter '{name}' harus berupa bilangan bulat.") from None
+    if not ge <= value <= le:
+        raise ApiValidationError(f"Parameter '{name}' harus di antara {ge} dan {le}.")
+    return value
+
+
+def _capacity(source, default=None):
+    default = cfg.AMBANG_KAPASITAS if default is None else default
+    return _to_float(source.get("ambang_kapasitas", default), "ambang_kapasitas", gt=0, le=MAX_CAPACITY)
+
+
+def _waspada(source):
+    return _to_float(source.get("batas_waspada", cfg.BATAS_WASPADA), "batas_waspada", gt=0, lt=1)
 
 
 # ==============================================================================
@@ -198,9 +259,11 @@ def get_forecast():
         return jsonify({"error": "Data prakiraan belum di-generate"}), 404
 
     df = read_forecast_csv(path_file)
-    ambang = float(request.args.get("ambang_kapasitas", cfg.AMBANG_KAPASITAS))
-    waspada = float(request.args.get("batas_waspada", cfg.BATAS_WASPADA))
+    ambang = _capacity(request.args)
+    waspada = _waspada(request.args)
     basis_interval = request.args.get("basis_interval", "95")
+    if basis_interval not in ("80", "95"):
+        raise ApiValidationError("Parameter 'basis_interval' harus '80' atau '95'.")
     kolom_hi = "batas_atas_80" if basis_interval == "80" else "batas_atas_95"
 
     df_risiko = rsk.klasifikasi_tabel_risiko(
@@ -228,10 +291,16 @@ def simulate_risk():
         "kolom_batas_atas": "batas_atas_95"
       }
     """
-    body = request.get_json(silent=True) or {}
-    ambang = float(body.get("ambang_kapasitas", cfg.AMBANG_KAPASITAS))
-    waspada = float(body.get("batas_waspada", cfg.BATAS_WASPADA))
+    body = request.get_json(silent=True)
+    if body is None:
+        body = {}
+    if not isinstance(body, dict):
+        raise ApiValidationError("Body JSON harus berupa objek.")
+    ambang = _capacity(body)
+    waspada = _waspada(body)
     kolom_hi = body.get("kolom_batas_atas", "batas_atas_95")
+    if kolom_hi not in ALLOWED_UPPER_COLUMNS:
+        raise ApiValidationError(f"Parameter 'kolom_batas_atas' harus salah satu dari {list(ALLOWED_UPPER_COLUMNS)}.")
 
     path_file = FOLDER_OUTPUT / "prediksi_future_6bln.csv"
     if not path_file.exists():
@@ -274,12 +343,13 @@ def get_metrics():
     """
     horizon = request.args.get("horizon")
     if horizon:
+        horizon = _to_int(horizon, "horizon", ge=1, le=24)
         path_file = FOLDER_OUTPUT / "metrik_per_horizon_final.csv"
         if not path_file.exists():
             return jsonify({"error": "Data metrik per horizon tidak ditemukan"}), 404
         df = pd.read_csv(path_file)
         subset = request.args.get("subset", "bersih")
-        df_sub = df[(df["subset"] == subset) & (df["horizon"] == int(horizon))]
+        df_sub = df[(df["subset"] == subset) & (df["horizon"] == horizon)]
         return jsonify(df_sub.to_dict(orient="records"))
 
     path_file = FOLDER_OUTPUT / "metrik_komparasi_final.csv"
@@ -318,12 +388,18 @@ def get_passengers():
     df = pd.read_csv(path_file, parse_dates=["tanggal"])
     start = request.args.get("start")
     end = request.args.get("end")
-    limit = int(request.args.get("limit", 200))
+    limit = _to_int(request.args.get("limit", 200), "limit", ge=1, le=500)
+
+    def _parse_date(raw, name):
+        try:
+            return pd.Timestamp(raw)
+        except (ValueError, TypeError):
+            raise ApiValidationError(f"Parameter '{name}' harus berupa tanggal (YYYY-MM-DD).") from None
 
     if start:
-        df = df[df["tanggal"] >= pd.Timestamp(start)]
+        df = df[df["tanggal"] >= _parse_date(start, "start")]
     if end:
-        df = df[df["tanggal"] <= pd.Timestamp(end)]
+        df = df[df["tanggal"] <= _parse_date(end, "end")]
 
     df = df.head(limit)
     data = [
@@ -378,7 +454,7 @@ def get_dashboard_data():
     """
     Menyajikan full data bundle JSON yang siap dikonsumsi langsung oleh Front-End dashboard.
     """
-    ambang = float(request.args.get("ambang_kapasitas", cfg.AMBANG_KAPASITAS))
+    ambang = _capacity(request.args)
     bundle = build_dashboard_bundle(ambang_kapasitas=ambang)
     return jsonify(bundle)
 
@@ -400,18 +476,22 @@ def serve_index():
 @app.route("/<path:path>", methods=["GET"])
 def serve_static(path):
     """Melayani aset statis front-end (css, js, img)."""
-    file_path = FOLDER_FRONTEND / path
-    if file_path.exists() and file_path.is_file():
-        return send_from_directory(str(FOLDER_FRONTEND), path)
-    return send_from_directory(str(FOLDER_FRONTEND), "index.html")
+    # Path /api/* yang tidak dikenal harus 404 JSON, bukan index.html berstatus 200.
+    if path == "api" or path.startswith("api/"):
+        return not_found(None)
+    root = FOLDER_FRONTEND.resolve()
+    file_path = (root / path).resolve()
+    if file_path.is_file() and file_path.is_relative_to(root):
+        return send_from_directory(str(root), file_path.relative_to(root).as_posix())
+    return send_from_directory(str(root), "index.html")
 
 
 # ==============================================================================
 # MAIN ENTRYPOINT
 # ==============================================================================
-sync_data_json()
-
 if __name__ == "__main__":
+    # Sinkronisasi hanya saat server Flask dijalankan langsung (bukan saat modul di-import).
+    sync_data_json()
     port = int(os.environ.get("PORT", 5000))
     print(f"============================================================")
     print(f"  Starting KRL Forecast Flask API on http://127.0.0.1:{port}")

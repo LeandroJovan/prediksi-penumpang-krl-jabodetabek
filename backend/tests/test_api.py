@@ -181,3 +181,19 @@ async def test_dashboard_bundle_endpoint(client: AsyncClient):
     data2 = res2.json()
     assert data2["ambang_kapasitas"]["nilai"] == 35000.0
 
+
+
+@pytest.mark.asyncio
+async def test_forecast_meta_cached_flag_flips_on_second_call(client: AsyncClient):
+    url = "/api/v1/forecasts/latest?ambang_kapasitas=33333"
+    first = await client.get(url)
+    second = await client.get(url)
+    assert first.json()["meta"]["cached"] is False
+    assert second.json()["meta"]["cached"] is True
+
+
+@pytest.mark.asyncio
+async def test_metrics_unknown_model_run_returns_empty_not_csv(client: AsyncClient):
+    res = await client.get("/api/v1/metrics?model_run_id=tidak-ada")
+    assert res.status_code == 200
+    assert res.json()["data"] == []

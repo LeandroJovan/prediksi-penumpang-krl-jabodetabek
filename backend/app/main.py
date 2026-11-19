@@ -54,6 +54,16 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning("DB initialization note: %s", exc)
 
+    # 3. Segarkan data/data.json (dibaca frontend statis) dari CSV pipeline terbaru.
+    try:
+        from fastapi.concurrency import run_in_threadpool
+
+        from backend.api import sync_data_json
+
+        await run_in_threadpool(sync_data_json)
+    except Exception as exc:
+        logger.warning("Sinkronisasi data.json dilewati: %s", exc)
+
     yield
 
     # Shutdown

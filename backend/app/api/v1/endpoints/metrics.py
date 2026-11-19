@@ -1,4 +1,5 @@
-from pathlib import Path
+import logging
+
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
@@ -9,6 +10,7 @@ from backend.app.core.config import REPO_ROOT
 from backend.app.db.models import Metric, ModelRun
 
 ROOT = REPO_ROOT
+logger = logging.getLogger("krl_backend.metrics")
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
@@ -16,7 +18,7 @@ router = APIRouter(prefix="/metrics", tags=["metrics"])
 async def list_metrics(
     model_run_id: str | None = None,
     subset: str | None = None,
-    horizon: int | None = Query(default=None, ge=1),
+    horizon: int | None = Query(default=None, ge=1, le=24),
     session: AsyncSession = Depends(db_session),
 ) -> dict:
     """Mengambil metrik evaluasi model (MASE, MAE, RMSE, MAPE, PICP) dari DB atau artefak CSV."""
@@ -32,6 +34,7 @@ async def list_metrics(
     try:
         rows = (await session.execute(statement)).all()
     except Exception:
+        logger.exception("Gagal membaca metrik dari DB; mencoba fallback CSV")
         rows = []
 
     if rows:
@@ -50,6 +53,11 @@ async def list_metrics(
             for metric, run_id in rows
         ]
         return {"data": data}
+
+    # Filter model_run_id eksplisit tanpa hasil: kembalikan kosong. CSV berisi SEMUA model,
+    # jadi fallback di sini akan menyajikan metrik model lain sebagai milik run yang diminta.
+    if model_run_id:
+        return {"data": []}
 
     # Fallback langsung ke CSV output jika DB belum di-populate
     if horizon is not None:

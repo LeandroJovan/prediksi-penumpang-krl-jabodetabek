@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import re
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -10,6 +11,8 @@ from redis.asyncio import Redis
 from backend.app.core.config import Settings
 from backend.app.schemas.forecast import ForecastResponse
 from backend.app.schemas.insight import InsightData, InsightPoint, InsightResponse, Recommendation
+
+logger = logging.getLogger("krl_backend.insights")
 
 ALLOWED_ACTIONS = [
     "monitor_capacity", "review_operational_readiness", "prepare_contingency_plan", "review_capacity_assumption",
@@ -343,10 +346,13 @@ class InsightService:
         key = f"insight:v1:{digest}"
         cached = await self.redis.get(key)
         if cached:
-            return InsightResponse.model_validate_json(cached)
+            hit = InsightResponse.model_validate_json(cached)
+            hit.meta["cached"] = True
+            return hit
         try:
             data = await self._ollama(facts)
-        except Exception:
+        except Exception as exc:
+            logger.warning("Ollama insight gagal (%s: %s); memakai fallback", type(exc).__name__, exc)
             data = fallback(facts)
         response = InsightResponse(data=data, meta={"language": language, "cached": False, "model": self.settings.ollama_model,
                                                      "prompt_version": self.settings.ai_insight_prompt_version,
