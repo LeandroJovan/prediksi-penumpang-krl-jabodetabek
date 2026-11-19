@@ -262,7 +262,13 @@ def _latih_lgbm_per_horizon(df_fitur_h, kolom_fitur=None, params=None):
     if params is None:
         params = LGBM_PARAMS_DEFAULT
 
-    df_train = df_fitur_h.dropna(subset=["y_target"])
+    # Buang baris yang target ATAU fiturnya kosong.
+    # Dulu hanya y_target yang dicek, sehingga 11 baris awal (2016-01..11)
+    # dengan y_tahun_lalu / roll_mean_12 = NaN ikut masuk pelatihan.
+    # LightGBM memperlakukan NaN sebagai nilai sah, jadi tidak error,
+    # tetapi model belajar dari pola kosong dan hasilnya melenceng
+    # (MASE 0.686 vs 0.600 pada baseline yang benar).
+    df_train = df_fitur_h.dropna(subset=["y_target"] + list(kolom_fitur))
     X = df_train[kolom_fitur].values
     y = df_train["y_target"].values
 
@@ -311,7 +317,8 @@ def prediksi_lightgbm(y_latih, horizon_maks, kal=None,
     prediksi_semua = []
     for h in range(1, horizon_maks + 1):
         df_h = buat_fitur_lightgbm(df_latih, kal, h, kolom_target)
-        df_train = df_h.dropna(subset=["y_target"])
+        # buang baris tanpa target maupun tanpa fitur (lihat _latih_lgbm_per_horizon)
+        df_train = df_h.dropna(subset=["y_target"] + list(kolom_fitur))
 
         if len(df_train) < 12:
             # Terlalu sedikit data latih, fallback ke ETS

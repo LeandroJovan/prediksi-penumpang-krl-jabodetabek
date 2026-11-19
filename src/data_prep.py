@@ -315,9 +315,17 @@ def gabung_target_kalender(target, kalender):
 
     data["tanggal"] = pd.to_datetime(data["year_month"] + "-01")
 
+    # Target alternatif: penumpang per hari kerja.
+    # Dipakai untuk uji A/B modelling (lihat KOLOM_TARGET_ALT di src/config.py).
+    # Normalisasi ini memisahkan permintaan riil dari efek jumlah hari kerja,
+    # yang selama ini menjadi sumber bias pada model target total bulanan.
+    data["penumpang_per_hari_kerja"] = (
+        data["penumpang_ribu"] / data["jumlah_hari_kerja"]
+    )
+
     # susun urutan kolom
-    urutan = ["year_month", "tanggal", "penumpang_ribu", "total_hari",
-              "jumlah_hari_kerja", "jumlah_libur_nasional_weekday",
+    urutan = ["year_month", "tanggal", "penumpang_ribu", "penumpang_per_hari_kerja",
+              "total_hari", "jumlah_hari_kerja", "jumlah_libur_nasional_weekday",
               "is_lebaran", "is_covid"]
     if "is_imputed" in data.columns:
         urutan.append("is_imputed")

@@ -16,7 +16,7 @@ LEVEL_INTERVAL = [0.80, 0.95]    # level interval prediksi
 
 # ---------- Target ----------
 KOLOM_TARGET = "penumpang_ribu"                  # target utama (ribu orang)
-KOLOM_TARGET_ALT = "penumpang_per_hari"          # target alternatif (dinormalisasi hari kerja)
+KOLOM_TARGET_ALT = "penumpang_per_hari_kerja"    # target alternatif (dinormalisasi hari kerja)
 
 # ---------- Kapasitas (Lapisan Keputusan) ----------
 AMBANG_KAPASITAS = 34000.0       # ribu penumpang per bulan (~34 juta orang/bulan)
